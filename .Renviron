@@ -1,0 +1,2 @@
+Sys.setenv(RENV_DOWNLOAD_METHOD = getOption("download.file.method"))
+R_LIBS=/home/fichtner/R/x86_64-pc-linux-gnu-library/4.4.0_renv

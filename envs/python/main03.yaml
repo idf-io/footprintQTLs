@@ -1,0 +1,25 @@
+name: main
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - scanpy
+  - h5py=3.1 		# -> scanpy [ = | < ]
+  - python-igraph	# -> scanpy
+  - leidenalg 		# -> scanpy
+  - ipykernel		# Required for cluster jupyterhub env installation
+  - tqdm
+  - jupyterlab
+  - nbconvert		# jupyter-nbconvert bin already available with jupyterlab, but uncommon naming
+  - upsetplot
+  - scikit-learn
+    #- pybigwig
+    #- rust
+    #- pip
+    #- pip:
+    #- scatac_fragment_tools
+    #- chrombpnet
+    #- tensorqtl
+    #- Pgenlib
+    #- polars-lts-cpu

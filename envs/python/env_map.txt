@@ -1,0 +1,6 @@
+main		2024-11-15
+main_plotting	2024-11-14	main + upsetplot
+main02		2024-11-15	main +sklearn
+main03		2024-11-15	main +sklearn +upsetplot	# upsetplot needs scikit-learn
+main04		2024-11-18	main03 +pybigwig
+main05		2024-11-29	main 04 +pybedtools +htslib	# Working with bedtools on the cluster jupyterhub

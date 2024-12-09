@@ -1,0 +1,7 @@
+Type: project
+Description: FootprintQTL
+Depends:
+    MatrixEQTL,
+    data.table,
+    dplyr,
+    tibble

@@ -1,0 +1,19 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy>=1.25
+  - hmmlearn>=0.3.2
+  - scikit-learn>=1.3
+  - scipy>=1.12
+  - python-igraph
+  - leidenalg
+  - pip
+ # After creating the environment, install these packages using pip
+ # # to avoid potential dependency conflicts with Conda packages.
+ # # It's recommended to install them after creating the environment.
+ # # pip:
+ # #   - macs3
+ # #   - magic-impute

@@ -1,0 +1,22 @@
+name: py_general
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - anaconda
+  - ipykernel
+  - pandas
+  - numpy
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - tqdm
+  - scanpy
+  - python-igraph
+  - rust
+  - pip
+  - pip:
+    - scatac_fragment_tools
+  

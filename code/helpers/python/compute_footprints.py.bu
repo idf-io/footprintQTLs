@@ -1,0 +1,140 @@
+import os
+import argparse
+from typing import List, Callable
+
+import numpy as np
+import scipy as sp
+
+import pyBigWig
+
+import utils
+
+def parse_args():
+
+    parser=argparse.ArgumentParser(description="Calculate the footprints of coverage files pertaining a an experimental condition.")
+    parser.add_argument('-c', '--covs-dir', type=str, required=True, help='Coverage files directory. Should only contain coverage files in bigwig format [.bw] based on bedgraph format.')
+    parser.add_argument('-o', '--out-npy', type=str, required=True, help='Output footprint file [.npy] to store the footprint files in.')
+    parser.add_argument('-p', '--peaks-file', type=str, required=True, help='tsv file with peak ids as first column.')
+    parser.add_argument('-H', '--header', action='store_true', help='Skip the header line of the peaks tsv file.')
+    parser.add_argument('-a', '--algorithm', choices=['js_div', 'js_divergence', 'jensen_shannon_divergence'], default='jensen_shannon_divergence', type=str, help='Footprint calculation algorithm.')
+
+    args = parser.parse_args()
+
+    return args
+
+
+def extract_donor_name(file_name: str):
+    
+    return file_name.split('_')[0]
+
+
+def compute_footprints(
+        coverage_files_dir: str,
+        out_npy: str,
+        peak_ids: List[str],
+        header: bool = False,
+        algorithm: str = 'js_divergence',
+        func_for_donor_naming: Callable[[List[str]], List[str]] = lambda x: os.path.splitext(x)[0]
+        ):
+    """
+    Computes the footprint for all coverage files within a directory for a set of peaks/regions.
+
+    Input:
+        - coverage_files_dir: Directory of coverage files to take into account. Only considers coverage files within the directory which are in bigwig (.bw) format and they must be created from bedgraph files.
+
+    TODOs:
+        - 01: use multi-dimensional arrays in very grand scheme for js_distance calculation
+        - scipy bug: https://github.com/scipy/scipy/pull/20786
+            --> If working with low insertion counds, errors can occur. In this case and if this wasn't corrected in scipy:>1.13.1, solve by installing from the above mentioned branch or manually fixing the code.
+    """
+
+    file_names = utils.list_files_and_links(coverage_files_dir, '.bw')
+    donors = [func_for_donor_naming(fn) for fn in file_names]
+
+    peaks = {}
+
+    # Get peaks dict with [chr, start and end]
+    for p in peak_ids:
+
+        utils.check_peak_format(p)
+        p_split = p.split(':')
+        peaks[p] = [str(p_split[0]), int(p_split[1]) - 1, int(p_split[2])]  # Indexing basis correction: 1-base fully-closed to 0-based half-open
+
+    arr = np.empty([len(donors), len(peaks.keys())])
+
+    covs = {p: {} for p in peaks.keys()}
+
+    for d in donors:
+
+        #TODO adapt data
+        #bw_file = f'{coverage_files_dir}/{d}.bw'
+        condition = os.path.basename(coverage_files_dir)
+        bw_file = f'{coverage_files_dir}/{d}_{condition}.bw'
+
+        if not os.stat(bw_file).st_size == 0:
+            # Populated bw file
+
+            bw = pyBigWig.open(bw_file)
+
+            for p in peaks.keys():
+
+                if peaks[p][0] in set(bw.chroms().keys()):
+                    # Avoid error by only searching if the chromosome exists.
+
+                    cov = bw.values(*peaks[p][0:3])
+                    cov = np.nan_to_num(cov, 0)
+
+                    if np.sum(cov) == 0:
+
+                        cov = np.full(len(cov), 1e-9)
+
+                    covs[p][d] = cov
+    
+                else:
+
+                    covs[p][d] = np.full(peaks[p][2] - peaks[p][1], 1e-9)
+
+            bw.close()
+
+        else:
+            # Empty bw file
+
+            for p in peaks.keys():
+
+                covs[p][d] = np.full(peaks[p][2] - peaks[p][1], 1e-9)
+
+
+    for p_index, p in enumerate(peaks.keys()):
+
+        cov_arr = np.vstack(list(covs[p].values()))
+        cov_mean = np.mean(cov_arr, axis=0)
+
+        for d_index, d in enumerate(donors):
+
+            js_dist = sp.spatial.distance.jensenshannon(cov_mean, covs[p][d], base = 2)
+            js_div = js_dist ** 2
+            arr[d_index, p_index] = js_div
+            # TODO 01: use multi-dimensional arrays in very grand scheme
+
+    utils.create_dir(out_npy, parent=True)
+
+    np.save(out_npy, arr)
+
+
+def main():
+
+    args = parse_args()
+
+    peak_ids = utils.read_rownames(args.peaks_file, header=args.header)
+    
+    compute_footprints(coverage_files_dir = args.covs_dir,
+                       out_npy = args.out_npy,
+                       peak_ids = peak_ids,
+                       header = args.header,
+                       algorithm = args.algorithm,
+                       func_for_donor_naming = extract_donor_name)
+
+
+if __name__ == '__main__':
+
+    main()

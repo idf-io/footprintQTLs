@@ -1,0 +1,22 @@
+{
+
+	"Bulk": [
+		"Glia",
+		"Differentiating RG",
+		"Dividing Glia",
+		"immature EN",
+		"IPC",
+		"UL-EN",
+		"DL-EN",
+		"Midbrain EN",
+		"Interneurons",
+		"Interneurons Prog."
+	],
+
+	"Discard": [
+		"Unclear",
+		"Stressed Prog.",
+		"Stressed Neurons"
+	]
+	
+}

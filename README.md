@@ -1,5 +1,18 @@
 ## Environment setup
 
+
+### Workflow
+
+```mermaid
+flowchart TB
+subgraph fQTLs
+E[make_matrix-eqtl_input_footprint-qtls.bash] --> D[process_footprint_adata.bash]
+F[call_footprint-qtls_matrix-eqtl.bash] --> E
+G[plot_qtl_results_footprints.bash] --> F
+end
+```
+
+
 ### R
 
 For reproducibility, `renv.lock` and `DESCRIPTION` files were provided for project-level R-package dependencies setup using `renv`.

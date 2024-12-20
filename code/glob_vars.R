@@ -9,7 +9,6 @@ FOOTPRINT_APPROACH = 'js_divergence'
 #FOOTPRINTS_EDA = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}/eda'
 
 GENOTYPES_TSV = sprintf('data/datasets/%s/genotype/genotype_NA.tsv', DATASET)
-#GENOTYPES_VCF = f'data/datasets/{DATASET}/genotype/genotype.vcf'
 #GENOTYPE_PCS_TSV = f'data/datasets/{DATASET}/genotype/genotype_pcs_T.tsv' # python only
 
 MATRIX_EQTL_INPUT_DIR = paste0('data/intermediate-data/datasets/', DATASET, '/matrix-eqtl/footprints/', FOOTPRINT_APPROACH, '/', CT_MAP_ID)

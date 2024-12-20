@@ -25,9 +25,30 @@ create_parent_dir <- function(file_path) {
 }
 
 # Error handling function
-handle_error <- function(err) {
-    cat("Error:", conditionMessage(err), "\n")
-    quit(status = 1)
+
+handle_error <- function(e, call.stack, quit = FALSE) {
+
+	error_log <- c(
+
+		'Error message:',
+		conditionMessage(e),
+		'Condition call:',
+		deparse(conditionCall(e)),
+		'Call stack',
+		call.stack
+	
+	)
+
+	print(error_log)
+
+	if (quit == TRUE) {
+
+		quit(status = 1)
+
+	}
+
 }
 
-
+assert <- function(condition, message = "Assertion failed") {
+  if (!condition) stop(message)
+}

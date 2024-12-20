@@ -319,7 +319,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
     - :: Make phenotype, genotype, peak location, snp location and covariates(footprint PCs and genotype PCs) tsvs
     - R:
         - bsub:
-            - mode=single-tests: 6G, x-190'
+            - mode=single-tests: 6G, 100-190'
             - mode=bulk-tests: 215G, 10'
     - I:
         - CT_MAP_JSON
@@ -353,10 +353,42 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
     - Todos:
         - [ ] Make individual steps functions if reused in other scenarios
     - Note:
-        - Major parameter: mode={bulk-test, single_test}
+        - Major parameter: mode={bulk-tests, single-tests, peak-tests}
 
 call_footprint-qtls_matrix-eqtl.bash
     - :: Call QTLs on the footprint data
+    - R: bsub(multiple=500): 0.5M, 25' bsub(multiple=5000): 0.5M, 10'
+    - I:
+        - MATRIX_EQTL_INPUT_DIR
+    - O:
+        - MATRIX_EQTL_OUTPUT_DIR
+    - A:
+    - L: 
+    - D: helpers/R/matrix-eqtl.R
+    - N:
+    - T: #qtl #job-array #alpha #cis-dist
+    - Todos:
+    - Note: renv has problems with many parallel cluster jobs
+
+plot_qtl_results_footprints.bash --> .R
+    - :: Collect, FDR and plot results of QTL testing
+    - R: bsub: 0.5M, 6'
+    - I: MATRIX_EQTL_OUTPUT_DIR
+    - O: MATRIX_EQTL_OUTPUT_DIR/
+                                qtls_all.tsv
+                                qtls_all_fdr.tsv
+                                qtls_stats.tsv
+    - L:
+    - D: call_footprint-qtls_matrix-eqtl.bash 
+    - N:
+    - T: #fdr
+    - Todos:
+
+
+
+
+process_single-test_qtl-calling_footprint-qtls.bash
+    - :: Merge the tests and compute statistics and plots from the output directory of qtl-calling of single-tests.
     - R:
     - I:
     - O:
@@ -366,27 +398,6 @@ call_footprint-qtls_matrix-eqtl.bash
     - N:
     - T:
     - Todos:
-    - Note:
-        Currently working to make this modularized. So this will only be a backup to the files below.
-
-
-call_footprint-qtls_matrix-eqtl_single-tests.bash
-call_footprint-qtls_matrix-eqtl_bulk-tests.bash
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -403,6 +414,7 @@ template.ipynb
     - N:
     - T:
     - Todos:
+
 
 
 

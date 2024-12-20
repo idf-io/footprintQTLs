@@ -1,11 +1,11 @@
 import os
 
-MAIN_ENV = 'main05'
+MAIN_ENV = 'main06'
 
 DATASET = 'hca_brain-organoids'
 CT_MAP_JSON = f'config/cell-type_groupings/{DATASET}/approach_2024-09-12.json'
 CT_MAP_ID = os.path.splitext(os.path.basename(CT_MAP_JSON))[0]
-COVERAGE_TOOL = 'chrombpnet' # python only
+COVERAGE_TOOL = 'chrombpnet'
 
 
 RNA_H5AD_OLD = '/omics/groups/OE0540/internal/projects/HCA_organoid_2/cemm_sabrina-20Jul2022/outputs_allsamples/sabrina_allsamples_rna_final_after_atac.h5ad' # Only python
@@ -15,7 +15,7 @@ EQTLS_DIR = f'data/intermediate-data/datasets/{DATASET}/rna-seq/gene-expression/
 
 
 GROUPED_FRAG_FILES_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/fragment-files/grouped/{CT_MAP_ID}'
-GROUPED_BIGWIG_FILES_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/coverages/{COVERAGE_TOOL}/{CT_MAP_ID}'
+GROUPED_BIGWIG_FILES_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/coverages/{COVERAGE_TOOL}/grouped/{CT_MAP_ID}'
 
 
 ATAC_PEAKS_H5AD_OLD = f'/omics/groups/OE0540/internal/projects/HCA_organoid_2/cemm_sabrina-20Jul2022/peakmatrix_RNA_QC_cells_reads_in_tss_norm.h5ad' # Only python

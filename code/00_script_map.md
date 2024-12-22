@@ -111,6 +111,13 @@ make_extra_files_peaks-accessibility.ipynb
     - L: ?
     - T: #footprints #locations #phenotype #bed
 
+format_fragment-files.bash
+    - :: Build the directories and softlinks necessary to create the template directory and file structure for project.
+    - F: 
+    - L:
+    - D:
+    - V: Newest
+
 
 ### caQTLs
 
@@ -149,13 +156,6 @@ make_extra_files_peaks-accessibility_cell-type-level.ipynb
 
 
 ### Group fragment files
-
-build_dir_tree.bash
-    - :: Build the directories and softlinks necessary to create the template directory and file structure for project.
-    - F: 
-    - L:
-    - D:
-    - V: Newest
 
 gather_group_cell-ids.py
     - :: Create group files containing the cells of the group (grouping based on annotation and grouping scheme)
@@ -382,21 +382,6 @@ plot_qtl_results_footprints.bash --> .R
     - D: call_footprint-qtls_matrix-eqtl.bash 
     - N:
     - T: #fdr
-    - Todos:
-
-
-
-
-process_single-test_qtl-calling_footprint-qtls.bash
-    - :: Merge the tests and compute statistics and plots from the output directory of qtl-calling of single-tests.
-    - R:
-    - I:
-    - O:
-    - A:
-    - L:
-    - D:
-    - N:
-    - T:
     - Todos:
 
 

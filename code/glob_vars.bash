@@ -1,4 +1,4 @@
-MAIN_ENV="main05"
+MAIN_ENV="main06"
 
 DATASET="hca_brain-organoids"
 CT_MAP_JSON="config/cell-type_groupings/${DATASET}/approach_2024-09-12.json"

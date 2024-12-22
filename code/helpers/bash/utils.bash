@@ -85,12 +85,12 @@ check_jobs() {
 
 }
 
-strip_and_order_fragment_file() {
-	# Function: Remove comment lines from fragment file and order it after 1) chromosome and 2)
+strip_and_sort_fragment_file() {
+	# Function: Remove comment lines from fragment file and order it after
+	# 				1) chromosome and 2) start position, then compress
 	# Arguments:
 	# 	1 - file_path - str - Handles zipped files automatically.
 	# 	2 - new_file_path
-	# 	3 - Compress output to bgzip?
 	# Example:
 	# 	strip_file fragments.tsv fragments_stripped.tsv
 	# Notes:
@@ -99,6 +99,7 @@ strip_and_order_fragment_file() {
 	# 	Text file
 	# 	Uniquely comment lines start with #
 	# TODO:
+	# 	- make compressing optional
 	# 	- Include arg to exit 1 with empty file instead of creating an empty compressed file
 	
 	if [[ "$1" == *.tsv ]]; then

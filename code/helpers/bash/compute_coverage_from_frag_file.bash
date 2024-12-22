@@ -39,8 +39,12 @@ frag_file_to_bw_chrombpnet() {
 	#
 	# Notes:
 	# 	- New*: ChromBPNet automatically detects the Tn5-shift and shifts it to +4/-4. If given manually, it will shift the fragments by the difference between the input shift and +4/-4. BE CAREFUL. E.g. manual args: ps=+4, ms=-5 => frag_start +0, frag_end +1; ps=0, ms=0 => first insertion +4, second insertion -5
-	set -euo pipefail
 
+	source "code/helpers/bash/utils.bash"
+
+
+	## Args
+	
 	if [[ $# -lt 8 ]] || [[ $# -gt 10 ]]; then
 
 		echo "Incorrect nr of arguments: <$#>"
@@ -66,7 +70,9 @@ frag_file_to_bw_chrombpnet() {
 	local randn="$(shuf -i 100000-999999 -n1)"
 	local frag_file_tmp="${out_bw}.${randn}.tmp.gz"
 
-	# Sanity checks
+
+	## Checks
+	
 	if [[ ! -f "$frag_file" ]]; then
 	
 		echo "Fragment file doesn't exist: ${frag_file}"
@@ -74,65 +80,69 @@ frag_file_to_bw_chrombpnet() {
 
 	fi
 
-	if [[ ! -e "$frag_file" ]]; then
+	if [[ ! -f "$cbn_py_file" ]]; then
 
 		echo "ChromBPNet python script not found! <$cbn_py_file> doesn't exist."
 		return 1
 
 	fi
 
+
+	## Run
+	
 	case $use_cluster in
 
 		false )
 
-			# python3.9
-			main_cmd="python \"$cbn_py_file\" \
+			strip_and_sort_fragment_file "$frag_file" "$frag_file_tmp"
+
+			## If file empty create empty output file
+			
+			#case "$frag_file" in
+
+				#*.tsv )
+
+					#if [[ ! -s "$frag_file_tmp" ]]; then
+
+						#touch "${out_bw}.bw"
+						#rm "$frag_file_tmp"
+						#return 0
+
+					#fi
+					#;;
+
+				#*.gz )
+
+					#if [[ -z "$(bgzip -dc "$frag_file_tmp" | head -c 1 | tr '\0\n' __)" ]]; then
+
+						#touch "${out_bw}.bw"
+						#rm "$frag_file_tmp"
+						#return 0
+
+					#fi
+					#;;
+
+				#* )
+					#echo "Input file [.tsv | .tsv.gz] not <${frag_file_tmp}>"
+					#return 1
+					#;;
+
+			#esac
+
+			
+			## Build main command
+
+			cmd_main="python \"$cbn_py_file\" \
 				-ifrag \"$frag_file_tmp\" \
 				-op \"$out_bw\" \
 				-c \"$chrom_sizes\" \
 				-g \"$ref_genome_file\" \
 				-d \"$assay_type\""
 
-			source "code/helpers/bash/utils.bash"
-
-			strip_and_order_fragment_file "$frag_file" "$frag_file_tmp"
-			
-			# Check if file is empty and return empty if so
-			case "$frag_file" in
-
-				*.tsv )
-
-					if [[ ! -s "$frag_file_tmp" ]]; then
-
-						touch "${out_bw}.bw"
-						rm "$frag_file_tmp"
-						return 0
-
-					fi
-					;;
-
-				*.gz )
-
-					if [[ -z "$(bgzip -dc "$frag_file_tmp" | head -c 1 | tr '\0\n' __)" ]]; then
-
-						touch "${out_bw}.bw"
-						rm "$frag_file_tmp"
-						return 0
-
-					fi
-					;;
-
-				* )
-					echo "Input file [.tsv | .tsv.gz] not <${frag_file_tmp}>"
-					return 1
-					;;
-
-			esac
-
 			
 			if [[ -n "$plus_shift" ]] && [[ -n "$minus_shift" ]]; then
 
-				main_cmd="$main_cmd \
+				cmd_main="$cmd_main \
 					-p $plus_shift \
 					-m $minus_shift"
 
@@ -144,10 +154,14 @@ frag_file_to_bw_chrombpnet() {
 
 			fi
 			
-			eval "$main_cmd"
+
+			## Run
+			
+			eval "$cmd_main"
 			mv "${out_bw}_unstranded.bw" "${out_bw}.bw"
 			rm "$frag_file_tmp"
 			;;
+
 
 		true )
 
@@ -160,6 +174,8 @@ frag_file_to_bw_chrombpnet() {
 
 			local job_id="compute_coverage_$(date '+%Y-%m-%d')_${file_base}_low_mem"
 
+			continue
+			# Legacy code: delete if no problems
 			cat <<EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=10G]"
@@ -176,7 +192,7 @@ source ~/.bash_profile
 source "code/helpers/bash/utils.bash"
 
 # python3.9
-main_cmd="python \"$cbn_py_file\" \
+cmd_main="python \"$cbn_py_file\" \
 	-ifrag \"$frag_file_tmp\" \
 	-op \"$out_bw\" \
 	-c \"$chrom_sizes\" \
@@ -219,7 +235,7 @@ esac
 
 if [[ -n "$plus_shift" ]] && [[ -n "$minus_shift" ]]; then
 
-	main_cmd="\$main_cmd \
+	cmd_main="\$cmd_main \
 		-p $plus_shift \
 		-m $minus_shift"
 
@@ -230,7 +246,7 @@ elif [[ -n "$plus_shift" ]] || [[ -n "$minus_shift" ]]; then
 	
 fi
 			
-eval "\$main_cmd"
+eval "\$cmd_main"
 mv "${out_bw}_unstranded.bw" "${out_bw}.bw"
 rm "$frag_file_tmp"
 EOF

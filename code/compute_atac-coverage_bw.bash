@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Description: For each fragment file in a folder create the corresponding coverages of the pooled fragments.
+#
+# Compute atac-seq coverages of group files
+#
 # Arguments:
 # 	cluster - str - opt - Use cluster to send jobs? [True | False] (default: False)
 # 	mode - str - opt - Which data to run on.
@@ -8,63 +10,98 @@
 # 	tool - str - opt - Tool used to create coverages.
 # 			   [ CBN/cbn/chrompbnet | SAFT/saft/sc-atac-frag-tools wiggle_tools/wt]
 # 			   (default=cbn)
+
+
+### Setup
+
 set -euo pipefail
 
-PROJECT_PATH=".."
-PROJECT_PATH="$(realpath ${PROJECT_PATH})"
-cd $PROJECT_PATH
 
-source "code/helpers/bash/compute_coverage_from_frag_file.bash"
+## Environment
 
-source $HOME/.bash_profile
-load-conda
-conda activate ian
+PROJECT_DIR=".."
+PROJECT_DIR="$(realpath ${PROJECT_DIR})"
+cd $PROJECT_DIR
 
-USE_CLUSTER="${1:-false}"
-
-case $USE_CLUSTER in
-
-	false ) echo "Local execution." ;;
-	true ) echo "Cluster execution via jobs." ;;
-	* ) echo "Argument 1 [True | False] not <${USE_CLUSTER}>."; exit 1 ;;
-
-esac
+source "code/glob_vars.bash" # DATASET, MAIN_ENV, GROUPED_GROUPED_FRAG_FILES_DIR, GROUPED_BIGWIG_FILES_DIR, TOOLS, REF_GENOME_FASTA, CHROM_SIZES
 
 
-TOOL="${3:-"CBN"}" # ChromBPNet
+## Args
 
-case "$TOOL" in
+TOOL="chrombpnet"
+MODE="default"
+USE_CLUSTER="false"
 
-	CBN|cbn|chrombpnet )
-		TOOL_DESCR="chrombpnet"
-		;;
+while getopts "t:m:c" opt; do
 
-	SAFT|saft|sc-atac-frag-tools )
-		TOOL_DESCR="sc-atac-fragment-tools"
-		;;
+	case "$opt" in
 
-	wiggle_tools|wt )
-		echo "Wiggle tools not implemented yet"
-		exit 1
-		TOOL_DESCR="wiggle_tools"
-		;;
+		t )
 
-	* ) echo "Wrong argument 3: Footprint tool [CBN | SAFT] not <$TOOL>."; exit 1 ;;
+			case "$OPTARG" in
 
-esac
+				CBN|cbn|chrombpnet )
 
-CBN_BIN="${HOME}/.conda/envs/ian/lib/python3.9/site-packages/chrombpnet/helpers/preprocessing/reads_to_bigwig.py"
-MODE="${2:-"borgs"}" # hca brain organoids
+					TOOL="chrombpnet"
+					;;
+
+				SAFT|saft|sc-atac-frag-tools )
+
+					TOOL="sc-atac-fragment-tools"
+					;;
+
+				wiggle_tools|wt )
+
+					echo "Wiggle tools not implemented yet"
+					exit 1
+					TOOL="wiggle_tools"
+					;;
+
+				? )
+
+					echo "Wrong argument -t: Footprint tool [CBN | SAFT] not <$OPTARG>."
+					exit 1
+					;;
+
+			esac
+			;;
+
+		m )
+
+			MODE="$OPTARG"
+			;;
+
+		c )
+
+			USE_CLUSTER="true"
+			;;
+
+		? )
+
+			echo "Usage: $0 [-c] cluster [-t] tool {cbn,saft,wt}. <${USE_CLUSTER}> not a valid argument."
+			exit 1
+			;;
+
+	esac
+
+done
 
 
 case $MODE in
 
-	borgs )
-		DATASET="hca_brain-organoids"
-		CT_MAP_JSON="config/cell-type_groupings/${DATASET}/approach_2024-09-12.json"
-		CT_MAP_ID="$(basename "${CT_MAP_JSON%.json}")"
-		FRAG_FILES_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/fragment-files/grouped/${CT_MAP_ID}"
-		eval "OUT_DIR=\"data/intermediate-data/datasets/${DATASET}/atac-seq/coverages/${TOOL_DESCR}/${CT_MAP_ID}\""
+	default )
+
+		if [[ "$TOOL" != "$TOOL" ]]; then
+
+			echo "Tool in command and glob_var should be the same. <${TOOL}> != <${TOOLS}>"
+			exit 1
+
+		fi
+
+		# DATASET
+		# CT_MAP_ID
+		# GROUPED_FRAG_FILES_DIR
+		eval "OUT_DIR=\"$GROUPED_BIGWIG_FILES_DIR\""
 
 		ps=""
 		ms=""
@@ -74,10 +111,9 @@ case $MODE in
 	borgs_small_10k )
 
 		DATASET="hca_brain-organoids_small_10k"
-		CT_MAP_JSON="config/cell-type_groupings/hca_brain-organoids/approach_2024-09-12.json"
-		CT_MAP_ID="$(basename "${CT_MAP_JSON%.json}")"
-		FRAG_FILES_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/fragment-files/grouped/${CT_MAP_ID}"
-		eval "OUT_DIR=\"data/intermediate-data/datasets/${DATASET}/atac-seq/coverages/${TOOL_DESCR}/${CT_MAP_ID}\""
+		# CT_MAP_ID
+		GROUPED_FRAG_FILES_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/fragment-files/grouped/${CT_MAP_ID}"
+		eval "OUT_DIR=\"data/intermediate-data/datasets/${DATASET}/atac-seq/coverages/${TOOL}/${CT_MAP_ID}\""
 
 		ps="+4"
 		ms="-5"
@@ -87,7 +123,7 @@ case $MODE in
 	toy )
 		DATASET="toy_atac-seq_fragments_for_coverage"
 		CT_MAP_ID="approach_placeholder" # Only used to name files
-		FRAG_FILES_DIR="$HOME/data/toy_datasets/atac-seq_fragments_for_coverage"
+		GROUPED_FRAG_FILES_DIR="$HOME/data/toy_datasets/atac-seq_fragments_for_coverage"
 		eval "OUT_DIR=\"$HOME/data/toy_datasets/atac-seq_fragments_for_coverage/coverages/${TOOL_DESCR}\""
 
 		ps="+4"
@@ -96,131 +132,223 @@ case $MODE in
 		;;
 
 	* )
-		echo "Wrong argument 2: MODE [borgs | borgs_small_10k | toy] not <$MODE>."
+		echo "Invalid mode argument: [default | borgs_small_10k | toy] not <$MODE>."
 		exit 1
 		;;
 
 esac
 
 
+## ... Environment
 
-## IO setup
+if [[ "$USE_CLUSTER" == "false" ]]; then
 
-# Output already contains files or dirs
-if [[ -n "$(find "$OUT_DIR" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -print -quit 2>/dev/null)" ]]; then
+	source $HOME/.bash_profile
+	load-micromamba
+	micromamba activate $MAIN_ENV
 
-	while true; do
-
-		echo "Output directory <${OUT_DIR}> already contains files or folders."
-		read -r -p "Delete contents? [Y,n]: " del
-
-		case "$del" in
-
-			[Yy]* ) rm -rf "${OUT_DIR:?}"; break ;;
-			[Nn]* ) echo "I won't work with confounding folders or files."; exit 1 ;;
-			* ) echo "Please answer [Y | n]." ;;
-
-		esac
-
-	done
+	source "code/helpers/bash/compute_coverage_from_frag_file.bash"
 
 fi
 
-mkdir -p "$OUT_DIR"
+
+## Variables
+
+CBN_BIN="${HOME}/.conda/envs/ian/lib/python3.9/site-packages/chrombpnet/helpers/preprocessing/reads_to_bigwig.py"
 
 
-## Main
+
+### SCRIPT ###
 
 
+while IFS= read -r -d '' cell_type_dir; do
 
-while IFS= read -r -d '' frag_file; do
+	cell_type="$(basename "$cell_type_dir")"
 
-	echo "Processing: ${frag_file}"
 
-	frag_name="$(basename "$frag_file")"
-	frag_name_short="${frag_name%.tsv.gz}"
+	## Clean old files
 
-	main_cmd="frag_file_to_bw_chrombpnet \
-		\"${CBN_BIN}\" \
-		\"${FRAG_FILES_DIR}/\${frag_name}\" \
-		\"${OUT_DIR}/\${frag_name_short}\" \
-		\"data/GRCh38-p14/hg38.fa\" \
-		\"data/GRCh38-p14/hg38.chrom.sizes\" \
-		\"ATAC\" \
-		\"${ps}\" \
-		\"${ms}\""
+	if [[ -n "$(find "${OUT_DIR}/${cell_type}" -mindepth 1 -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
 
-	case $USE_CLUSTER in 
+		rm -rf "${OUT_DIR}"
 
-		false )
+	fi
 
-			case $TOOL in
+	mkdir -p "${OUT_DIR}/${cell_type}"
 
-				CBN|cbn|chrombpnet )
-					eval "$main_cmd"
-					;;
 
-				SAFT|saft|sc-atac-frag-tools )
-					#TODO: implement
-					echo "Not implemented yet"
-					#scatac_fragment_tools bigwig \
-						#-i 
-						#-o
-						#-c
-						#-x \
-						#-normalize False \
-						#-scaling 1.0
-						#–cut-sites False # Use 1 bp Tn5 cut sites (start and end of each fragment) instead of 
-						# 		   whole fragment length for coverage calculation
-					;;
+	## Cluster settings
 
-				* )
-					echo "Error in logic"
-					exit 1
-					;;
+	if [[ "$USE_CLUSTER" == "true" ]]; then
 
-			esac
+		njobs=0
+		jobs_file="code/bsub/logs/compute_coverage_footprints_$(date -I)_${cell_type}.commands"
 
-			;;
-			
-		true )
+		if [[ -f "$jobs_file" ]]; then
 
-			case $TOOL in
+			rm "$jobs_file"
 
-				CBN|cbn|chrombpnet )
+		fi
 
-					main_cmd="$main_cmd \
-						\"true\" \
-						\"$PROJECT_PATH\""
+	fi
 
-					job_script_path="${PROJECT_PATH}/code/bsub/logs/compute_coverage_$(date '+%Y-%m-%d')_${frag_name_short}.bash"
 
-					eval "$main_cmd" > "$job_script_path"
+	files_array=() # *
 
-					job_id="$(bsub < "$job_script_path" | cut -d' ' -f2 | sed 's/[<>]//g')"
+	while IFS= read -r -d '' frag_file; do
 
-					cluster_jobs+=("$job_id")
-					;;
+		echo "Processing: ${frag_file}"
 
-				SAFT|saft|sc-atac-frag-tools )
-					echo "Not yet implemented"
-					exit 1
-					;;
 
-				* )
-					"Logic mistake"
-					exit 1
-					;;
+		## Variables
+		
+		frag_name="$(basename "$frag_file")"
 
-			esac
+		if [[ "$frag_name" == *.tsv.gz ]]; then
 
-			;;
-			
-		* )
-			echo "Wrong logic"
+			donor="${frag_name%.tsv.gz}"
+
+		elif [[ "$frag_file" == *.tsv ]]; then
+
+			donor="${frag_name%.tsv}"
+
+		else
+
+			echo "Wrong input format: must be .tsv or .tsv.gz"
 			exit 1
-			;;
 
-	esac
+		fi
 
-done < <(find "$FRAG_FILES_DIR/" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -iregex ".*.tsv\(.gz\)?$" -print0)
+		out_file="${OUT_DIR}/${cell_type}/${donor}"
+
+
+		## * Avoid double processing .gz files
+		
+		if [[ "${#files_array[@]}" -gt 0 ]] && printf '%s\n' "${files_array[@]}" | grep -q "^${frag_file}$"; then
+
+			echo "File ${frag_file} is already in the array. Skipping."
+			continue
+
+
+		else
+
+			files_array+=("$frag_file")
+
+			if [[ "$frag_file" == *.gz ]]; then
+
+				files_array+=("${frag_file%.gz}")
+
+			else
+
+				files_array+=("${frag_file}.gz")
+
+			fi
+
+		fi
+
+
+		cmd_cbn="frag_file_to_bw_chrombpnet \
+			\"${CBN_BIN}\" \
+			\"${frag_file}\" \
+			\"${out_file}\" \
+			\"${REF_GENOME_FASTA}\" \
+			\"${CHROM_SIZES}\" \
+			\"ATAC\" \
+			\"${ps}\" \
+			\"${ms}\""
+
+		#scatac_fragment_tools bigwig \
+			#-i 
+			#-o
+			#-c
+			#-x \
+			#-normalize False \
+			#-scaling 1.0
+			#–cut-sites False # Use 1 bp Tn5 cut sites (start and end of each fragment) instead of 
+			# 		   whole fragment length for coverage calculation
+
+
+		## Run
+		
+		case $USE_CLUSTER in 
+
+			false )
+
+				case "$TOOL" in
+
+					chrombpnet )
+
+						echo "$cmd_cbn"
+						eval "$cmd_cbn"
+						;;
+
+					sc-atac-frag-tools )
+
+						#TODO: implement
+						echo "Not implemented yet"
+						;;
+
+				esac
+
+				;;
+				
+			true )
+
+				njobs=$(( njobs + 1 ))
+
+
+				case "$TOOL" in
+
+					chrombpnet )
+
+						echo "$cmd_cbn" >> "$jobs_file"
+						;;
+
+					sc-atac-frag-tools )
+						
+						echo "Not yet implemented"
+						exit 1
+						;;
+
+				esac
+
+				;;
+
+		esac
+
+	done < <(find "$cell_type_dir/" -mindepth 1 -maxdepth 1 -type f -iregex ".*.tsv\(.gz\)?$" -print0)
+
+
+	## Job array
+
+	if [[ "$USE_CLUSTER" == "true" ]]; then
+
+		job_id="compute_coverage_footprints_$(date -I)_${cell_type}"
+
+		bsub << EOF
+#!/usr/bin/env bash
+#BSUB -R "rusage[mem=10G]"
+#BSUB -q medium
+#BSUB -cwd ${PROJECT_DIR}
+#BSUB -J "${job_id}[1-${njobs}]"
+#BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.out
+#BSUB -e ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.err
+
+set -euo pipefail
+
+cd $PROJECT_DIR
+
+source "$HOME/.bash_profile"
+load-micromamba
+micromamba activate $MAIN_ENV
+
+
+## Run
+cmd="source code/helpers/bash/compute_coverage_from_frag_file.bash && \$(sed -n "\${LSB_JOBINDEX}p" "${jobs_file}")"
+echo -e \$cmd
+bash -c "\$cmd"
+EOF
+
+	fi
+
+done < <(find "$GROUPED_FRAG_FILES_DIR/" -mindepth 1 -maxdepth 1 -type d -print0)

@@ -230,3 +230,8 @@ rsconnect/
 
 ### Ian ###
 code/bsub/
+code/unused/
+code/to-delete/
+data/
+
+.vscode/

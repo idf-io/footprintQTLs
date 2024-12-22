@@ -1,0 +1,36 @@
+name: main
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - scanpy
+  - h5py=3.1 		# -> scanpy [ = | < ]
+  - python-igraph	# -> scanpy
+  - leidenalg 		# -> scanpy
+  - ipykernel		# Required for cluster jupyterhub env installation
+  - tqdm
+  - jupyterlab
+  - nbconvert		# jupyter-nbconvert bin already available with jupyterlab, but uncommon naming
+  - upsetplot
+  - scikit-learn
+  - pybigwig            # & -> chrombpnet
+  - pybedtools          # python>=3.6
+  - htslib              # -> pybedtools
+    #- rust
+  - numpy<2.0.0	# -> chrombpnet
+  - samtools            # -> chrombpnet
+  - bedtools            # -> chrombpnet
+  - ucsc-bedgraphtobigwig # -> chrombpnet
+  - meme                # -> chrombpnet
+  - pip
+  - pip:
+    - chrombpnet
+# - scatac_fragment_tools
+# - tensorqtl
+# - Pgenlib
+# - polars-lts-cpu
+
+# Note:
+# Pip couldn't install macs3, scatac-fragment-tools dependencies completely cause it just can't.
+# Should split up the envs depending on the usecase

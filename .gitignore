@@ -232,6 +232,8 @@ rsconnect/
 code/bsub/
 code/unused/
 code/to-delete/
+code/old/
 data/
 
 .vscode/
+/renv/

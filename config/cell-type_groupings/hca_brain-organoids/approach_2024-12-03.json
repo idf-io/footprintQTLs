@@ -1,0 +1,31 @@
+{
+
+	"Glia": [
+		"Glia",
+		"Differentiating RG",
+		"Dividing Glia"
+	],
+
+	"Neural progenitors": [
+		"immature EN",
+		"IPC"
+	],
+
+	"Layer EN": [
+		"DL-EN",
+		"UL-EN"
+	],
+
+	"Midbrain EN": [
+		"Midbrain EN"
+	],
+
+	"Discard": [
+		"Unclear",
+		"Stressed Prog.",
+		"Stressed Neurons",
+		"Interneurons",
+		"Interneurons Prog."
+	]
+	
+}

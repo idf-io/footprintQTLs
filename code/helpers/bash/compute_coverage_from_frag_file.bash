@@ -65,10 +65,13 @@ frag_file_to_bw_chrombpnet() {
 
 	local file_base
 	file_base="$(basename "${frag_file%%.*}")"
+
 	local out_dir="$(dirname "$out_bw")"
+	local out_base="$(basename "$out_bw")"
 
 	local randn="$(shuf -i 100000-999999 -n1)"
-	local frag_file_tmp="${out_bw}.${randn}.tmp.gz"
+	local frag_file_tmp="${out_dir}/tmp/${out_base}.${randn}.gz"
+	mkdir -p "${out_dir}/tmp"
 
 
 	## Checks
@@ -96,45 +99,46 @@ frag_file_to_bw_chrombpnet() {
 
 			strip_and_sort_fragment_file "$frag_file" "$frag_file_tmp"
 
-			## If file empty create empty output file
+			## Handle empty files: ignore
 			
-			#case "$frag_file" in
+			case "$frag_file" in
 
-				#*.tsv )
+				*.tsv )
 
-					#if [[ ! -s "$frag_file_tmp" ]]; then
+					if [[ ! -s "$frag_file_tmp" ]]; then
 
 						#touch "${out_bw}.bw"
 						#rm "$frag_file_tmp"
-						#return 0
+						return 0
 
-					#fi
-					#;;
+					fi
+					;;
 
-				#*.gz )
+				*.gz )
 
-					#if [[ -z "$(bgzip -dc "$frag_file_tmp" | head -c 1 | tr '\0\n' __)" ]]; then
+					if [[ -z "$(bgzip -dc "$frag_file_tmp" | head -c 1 | tr '\0\n' __)" ]]; then
 
 						#touch "${out_bw}.bw"
 						#rm "$frag_file_tmp"
-						#return 0
+						return 0
 
-					#fi
-					#;;
+					fi
+					;;
 
-				#* )
-					#echo "Input file [.tsv | .tsv.gz] not <${frag_file_tmp}>"
-					#return 1
-					#;;
+				* )
 
-			#esac
+					echo "Input file [.tsv | .tsv.gz] not <${frag_file_tmp}>"
+					return 1
+					;;
 
-			
+			esac
+
+
 			## Build main command
 
 			cmd_main="python \"$cbn_py_file\" \
 				-ifrag \"$frag_file_tmp\" \
-				-op \"$out_bw\" \
+				-o \"$out_bw\" \
 				-c \"$chrom_sizes\" \
 				-g \"$ref_genome_file\" \
 				-d \"$assay_type\""
@@ -159,7 +163,7 @@ frag_file_to_bw_chrombpnet() {
 			
 			eval "$cmd_main"
 			mv "${out_bw}_unstranded.bw" "${out_bw}.bw"
-			rm "$frag_file_tmp"
+			#rm "$frag_file_tmp"
 			;;
 
 

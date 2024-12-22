@@ -13,6 +13,7 @@ PRECOMPUTED_EQTLS_TSV="data/datasets/${DATASET}/rna-seq/gene-expression/eqtls/eq
 
 
 ATAC_PEAKS_H5AD_NEW="data/datasets/hca_brain-organoids/atac-seq/chromatin_accessibility/peak-matrix_rna-qc-cells_norm-reads-in-tss.h5ad"
+ATAC_CHROM_ACCESS_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/chromatin-accessibility"
 ATAC_CHROM_ACCESS_METADATA_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/chromatin-accessibility/metadata"
 CA_QTLS_MEQTL_INPUT_DIR="data/intermediate-data/datasets/${DATASET}/matrix-eqtl/chromatin-accessibility/${CT_MAP_ID}"
 

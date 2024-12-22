@@ -9,7 +9,7 @@ COVERAGE_TOOL = 'chrombpnet'
 
 
 RNA_H5AD_OLD = '/omics/groups/OE0540/internal/projects/HCA_organoid_2/cemm_sabrina-20Jul2022/outputs_allsamples/sabrina_allsamples_rna_final_after_atac.h5ad' # Only python
-RNA_H5AD_NEW = f'data/datasets/{DATASET}/rna-seq/gene_expression/ gene-expression_qc_after-atac.h5ad' # Only python
+RNA_H5AD_NEW = f'data/datasets/{DATASET}/rna-seq/gene_expression/gene-expression_qc_after-atac.h5ad' # Only python
 PRECOMPUTED_EQTLS_TSV = f'data/datasets/{DATASET}/rna-seq/gene-expression/eqtls/eqtls_fdr_all_cell-types_hvgs.tsv'
 EQTLS_DIR = f'data/intermediate-data/datasets/{DATASET}/rna-seq/gene-expression/eqtls'
 

@@ -208,7 +208,7 @@ while IFS= read -r -d '' cell_type_dir; do
 
 			donor="${frag_name%.tsv.gz}"
 
-		elif [[ "$frag_file" == *.tsv ]]; then
+		elif [[ "$frag_name" == *.tsv ]]; then
 
 			donor="${frag_name%.tsv}"
 
@@ -328,9 +328,9 @@ while IFS= read -r -d '' cell_type_dir; do
 		bsub << EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=10G]"
-#BSUB -q medium
+#BSUB -q long
 #BSUB -cwd ${PROJECT_DIR}
-#BSUB -J "${job_id}[1-${njobs}]"
+#BSUB -J "${job_id}"
 #BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.out
 #BSUB -e ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.err
 
@@ -344,9 +344,7 @@ micromamba activate $MAIN_ENV
 
 
 ## Run
-cmd="source code/helpers/bash/compute_coverage_from_frag_file.bash && \$(sed -n "\${LSB_JOBINDEX}p" "${jobs_file}")"
-echo -e \$cmd
-bash -c "\$cmd"
+bash <(printf "source code/helpers/bash/compute_coverage_from_frag_file.bash\n%s" "\$(cat ${jobs_file})")
 EOF
 
 	fi

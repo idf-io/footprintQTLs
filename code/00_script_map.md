@@ -199,14 +199,15 @@ join_fragments_by-groups.bash
 ### footprints(QTLs)
 
 compute_atac-coverage_bw.bash
-    - :: Computes bw coverages from tsv.gz fragment files using ChromBPNet or scATAC-seq fragment tools.
-    - F: frag_file_to_bw_chrombpnet
+    - :: Computes coverages (.bw) from tsv.gz fragment files using ChromBPNet or scATAC-seq fragment tools.
+    - R: bsub: 2.5G, 404'
+    - I:
+        - GROUPED_FRAG_FILES_DIR/<cell_type>/<donor>.tsv.gz
+    - O:
+        - GROUPED_BIGWIG_FILES_DIR/<cell_type>/<donor>.bw
     - L: compute_footprints.bash
-    - D: strip_and_order_fragment_file
-    - N: The coverages are performed on fragment-file-level so these must represent the correct groups already (e.g. cell-type-donor)
-    - T:
-        #jobs #cluster #bw #chrombpnet
-
+    - D: join_fragments_by-groups.bash
+    - T: #jobs #cluster #job-array #footprint #discard-empty-input
 
 compute_footprints.bash
     - :: Computes the footprint/shape metric for all samples/donors with respect to the average profile and outputs an anndata object per cell type.
@@ -399,28 +400,3 @@ template.ipynb
     - N:
     - T:
     - Todos:
-
-
-
-
-
-# QTL mapping pipeline
-
-matrix-eQTL_input_refactored_annotation.ipynb
-
-
-
-
-matrix-eqtl_args.R
-matrix-eQTL_input_refactored.ipynb
-matrix-eQTL_input_refactored2.bash
-matrix-eqtl_args.cp.R
-caQTLS_analysis.ipynb
-caqtl_stats.R
-matrix-eQTL_input.ipynb
-
-matrix-eqtl_restricted.R
-matrix-eQTL_input_refactored.R
-
-
-matrix-eQTL_input_refactored2/

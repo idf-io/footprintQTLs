@@ -56,9 +56,13 @@ fi
 
 ### SCRIPT ###
 
-#file="${FOOTPRINTS_DIR}/footprints_UL-EN_processed.h5ad"
+#file="${FOOTPRINTS_DIR}/footprints_Glia_processed.h5ad"
 
 while IFS= read -r -d '' adatas_long; do
+
+	#if [[ "$adatas_long" == "results/datasets/hca_brain-organoids/atac-seq/footprints/js_divergence/approach_2024-09-12/footprints_Glia_processed.h5ad" ]]; then
+		#continue
+	#fi
 
 	adata="$(basename $adatas_long)"
 	adata_short="${adata%_processed.h5ad}"
@@ -69,6 +73,9 @@ while IFS= read -r -d '' adatas_long; do
 	# Create ct-specific notebook
 
 	echo "Processing file: ${ipynb_out}"
+
+	
+	mkdir -p "$(dirname "$ipynb_out")"
 
 	cat "code/make_matrix-eqtl_input_footprint-qtls.ipynb" |
 	sed '/^    "    PROJECT_DIR = '\''manual'\''/c\    "    PROJECT_DIR = '\'"${PROJECT_DIR}"\''\\n",' |

@@ -219,6 +219,27 @@ def check_peak_format(peak):
 
 
 
+def are_sublists_unique(lst):
+    '''
+    In list of atomic lists, are the lists of the first rank unique?
+    '''
+
+    seen = set()
+
+    for sublist in lst:
+
+        as_tuple = tuple(sublist)
+
+        if as_tuple in seen:
+
+            return False
+
+        seen.add(as_tuple)
+
+    return True
+
+
+
 ### Parsers ###
 
 def parse_vcf(vcf_file: str):

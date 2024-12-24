@@ -91,8 +91,7 @@ process_peaks_adata.ipynb
                             - peak_matrix_donors-pseudobulk_<CT>.h5ad
     - D:
         format_peaks_adata.ipynb
-    - L: ?
-        - process_peaks_adata.bash # BSUB launcher
+    
     - T: #format #ct-map #json #donor-artifact #subset #discard
 
 
@@ -117,6 +116,18 @@ format_fragment-files.bash
     - L:
     - D:
     - V: Newest
+
+peak_selector.ipynb
+    - :: Select peaks for downstream QTL analysis
+    - R: jupyterhub02: 5'
+    - I:
+    - O:
+    - A:
+    - L:
+    - D:
+    - N:
+    - T:
+    - Todos:
 
 
 ### caQTLs
@@ -210,15 +221,14 @@ compute_atac-coverage_bw.bash
     - T: #jobs #cluster #job-array #footprint #discard-empty-input
 
 compute_footprints.bash
-    - :: Computes the footprint/shape metric for all samples/donors with respect to the average profile and outputs an anndata object per cell type.
-    - F: compute_footprints.py
-        + DATASET, CT_MAP_JSON, CT_MAP_KEY
-    - L: [...call fQTLs...]
-    - D:
+    - :: Computes the footprint metric for all samples/donors within a directory
+    - R: bsub: 10G, 140'
+    - L: pre-annotate_footprint_adata.bash
+    - D: compute_atac-coverage_bw.bash
     - N: 
-        - The footprints are computed using bw(bg) files on a sample/donor-level, a folder with only these bw files is required.
-        - Discar: `Discard` group
-    - T: #jobs #cluster #footprint #jensen-shannon #shape
+        - Discarded: `Discard` group
+        - Metrics: jensen-shannon-divergence, counts
+    - T: #jobs #cluster #footprint #jensen-shannon #shape #discard
 
 
 pre-annotate_footprint_adata.py

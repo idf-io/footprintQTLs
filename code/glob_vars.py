@@ -6,6 +6,7 @@ DATASET = 'hca_brain-organoids'
 CT_MAP_JSON = f'config/cell-type_groupings/{DATASET}/approach_2024-09-12.json'
 CT_MAP_ID = os.path.splitext(os.path.basename(CT_MAP_JSON))[0]
 COVERAGE_TOOL = 'chrombpnet'
+ALGORITHMS = ('js_divergence', 'counts')
 
 
 RNA_H5AD_OLD = '/omics/groups/OE0540/internal/projects/HCA_organoid_2/cemm_sabrina-20Jul2022/outputs_allsamples/sabrina_allsamples_rna_final_after_atac.h5ad' # Only python
@@ -23,6 +24,7 @@ ATAC_PEAKS_H5AD_NEW = f'data/datasets/{DATASET}/atac-seq/chromatin_accessibility
 ATAC_PEAKS_PROCESSED_H5AD = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/adata/peak_matrix.h5ad'
 ATAC_CHROM_ACCESS_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility'
 ATAC_CHROM_ACCESS_METADATA_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/metadata'
+SELECT_PEAKS_TSV_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/metadata/select_peaks/{CT_MAP_ID}'
 CA_QTLS_MEQTL_INPUT_DIR = f'data/intermediate-data/datasets/{DATASET}/matrix-eqtl/chromatin-accessibility/{CT_MAP_ID}'
 
 
@@ -31,8 +33,8 @@ CA_QTLS_MEQTL_INPUT_DIR = f'data/intermediate-data/datasets/{DATASET}/matrix-eqt
 
 FOOTPRINT_APPROACH = 'js_divergence'
 FOOTPRINTS_DIR = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}'
-FOOTPRINTS_EDA = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}/eda'
-FOOTPRINTS_METADATA_DIR = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}/metadata'
+#FOOTPRINTS_EDA = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}/eda'
+#FOOTPRINTS_METADATA_DIR = f'results/datasets/{DATASET}/atac-seq/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}/metadata'
 
 
 GENOTYPES_TSV = f'data/datasets/{DATASET}/genotype/genotype_NA.tsv'

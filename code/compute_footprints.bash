@@ -149,20 +149,30 @@ while IFS= read -r -d '' cell_type_dir; do
 
 	cell_type="$(basename "$cell_type_dir")"
 
-	echo "${cell_type}"
-
 	if [[ "$cell_type" == "Discard" ]]; then
 
 		continue
 
 	fi
 
+	echo "${cell_type}"
+
+
+
+	cmd_list=()
 
 	while IFS= read -r -d '' peak_set_file_path; do
 
 		peak_set_file="$(basename "$peak_set_file_path")"
 		peak_set="${peak_set_file%.bed}"
 		peak_set="${peak_set/peaks_/}"
+
+		if [[ "$peak_set" != "ca-qtls_pm1k_variant-centred_15bp" ]] && \
+		   [[ "$peak_set" != "ca-qtls_pm1k_variant-centred_25bp" ]]; then
+
+			continue
+
+		fi
 
 		echo -e "\t${peak_set}"
 
@@ -201,11 +211,21 @@ while IFS= read -r -d '' cell_type_dir; do
 
 				true )
 
-					job_id="compute_fp_$(date '+%Y-%m-%d')_${peak_set}_${algorithm:0:4}_${cell_type}"
-					bsub <<EOF
+					cmd_list+=("$cmd_main")
+					;;
+			
+			esac
+
+		done
+
+	done < <(find "${PEAK_FILES_DIR}/${cell_type}" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -iname "peaks_*" -print0)
+
+
+	job_id="compute_footprints_$(date '+%Y-%m-%d')_${cell_type}"
+	bsub <<EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=30G]"
-#BSUB -q medium
+#BSUB -q long
 #BSUB -cwd ${PROJECT_DIR}
 #BSUB -J ${job_id}
 #BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.out
@@ -219,14 +239,11 @@ source "${HOME}/.bash_profile"
 load-micromamba
 micromamba activate ${MAIN_ENV}
 
-${cmd_main}
+$(for cmd in "${cmd_list[@]}"; do
+
+	echo "${cmd}"
+
+done)
 EOF
-					;;
-			
-			esac
-
-		done
-
-	done < <(find "${PEAK_FILES_DIR}/${cell_type}" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -iname "peaks_*" -print0)
 
 done < <(find "${COV_FILES_DIR}" -mindepth 1 -maxdepth 1 -type d -print0)

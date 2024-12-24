@@ -1,7 +1,4 @@
-## Environment setup
-
-
-### Workflow
+## Workflow
 
 ```mermaid
 flowchart TD
@@ -25,7 +22,7 @@ X1 --> X2
 X2 --> X3
 end
 
-K{{peak_selection.ipynb}}
+K>peak_selection.ipynb]
 L>make_matrix-eqtl_input_footprint-qtls.bash]
 L1[matrix-eQTL_input_refactored_annotation.ipynb]
 M{{make_extra_files_peaks-accessibility_cell-type-level.ipynb}}
@@ -76,6 +73,8 @@ end
 - X-ended arrows: Not intended downstream (e.g. temporary file)
 - o-ended arrows: Newer/updated version of the file
 
+
+## Environment setup
 
 ### R
 

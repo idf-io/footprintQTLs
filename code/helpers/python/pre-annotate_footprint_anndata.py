@@ -207,7 +207,7 @@ def annotate_peak_locs_adata(adata: str):
     """
 
     adata_annotated = adata.copy()
-    adata_annotated.var['peak_name'] = adata_annotated .var.index
+    adata_annotated.var['peak_name'] = adata_annotated.var.index
     adata_annotated.var['chr'] = adata_annotated.var['peak_name'].str.split(':').str[0]
     adata_annotated.var['start'] = adata_annotated.var['peak_name'].str.split(':').str[1]
     adata_annotated.var['end'] = adata_annotated.var['peak_name'].str.split(':').str[2]
@@ -263,9 +263,8 @@ def main():
     adata_ref = ad.read_h5ad(args.reference_adata)
 
 
-    adata.obs['donor'] = adata.obs.index
     donor_id_map = adata_ref.obs[['donor', 'donor_id']].set_index('donor')['donor_id'].to_dict()
-    adata.obs['donor_id'] = adata.obs.index.map(donor_id_map)
+    adata.obs['donor_id'] = adata.obs['donor'].map(donor_id_map)
 
 
     adata_annotated = annotate_peak_locs_adata(adata)
@@ -273,7 +272,6 @@ def main():
 
 
     if args.use_ref_anndata:
-
 
         adata_annotated = annotate_ncells_adata_ref_adata(adata_annotated, adata_ref, kwargs)
 

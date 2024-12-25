@@ -18,6 +18,7 @@ ATAC_CHROM_ACCESS_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/chrom
 
 
 ATAC_PEAKS_H5AD_NEW="data/datasets/hca_brain-organoids/atac-seq/chromatin_accessibility/peak-matrix_rna-qc-cells_norm-reads-in-tss.h5ad"
+ATAC_PEAKS_PROCESSED_H5AD="data/intermediate-data/datasets/${DATASET}/atac-seq/chromatin-accessibility/adata/peak_matrix.h5ad"
 ATAC_CHROM_ACCESS_METADATA_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/chromatin-accessibility/metadata"
 SELECT_PEAKS_TSV_DIR="data/intermediate-data/datasets/${DATASET}/atac-seq/chromatin-accessibility/metadata/select_peaks/${CT_MAP_ID}"
 

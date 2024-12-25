@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Annotate (ct-specific) anndatas with:
-#       - donor, donor_id
+#    - donor, donor_id
 # 	- nr. of cells per donor-ct
 # 	- nr. of insertions per donor-ct
 # 	- nr. of fragments per donor-ct
@@ -27,7 +27,8 @@
 
 set -eou pipefail
 
-# Args
+## Args
+
 USE_CLUSTER=false
 
 while getopts "c" opt; do
@@ -41,12 +42,14 @@ while getopts "c" opt; do
 
 done
 
-# Environment
+
+## Environment
+
 PROJECT_DIR=".."
 PROJECT_DIR="$(realpath ${PROJECT_DIR})"
 cd $PROJECT_DIR
 
-source code/glob_vars.bash # FOOTPRINTS_DIR, ATAC_PEAKS_H5AD_NEW, GROUPED_FRAG_FILES_DIR, MAIN_ENV
+source code/glob_vars.bash # FOOTPRINTS_DIR, ATAC_PEAKS_PROCESSED_H5AD, GROUPED_FRAG_FILES_DIR, MAIN_ENV, CT_MAP_ID
 
 if [[ "$USE_CLUSTER" == "false" ]]; then
 
@@ -60,46 +63,70 @@ fi
 
 ### SCRIPT ###
 
-while IFS= read -r -d '' filename; do
+while IFS= read -r -d '' algorithm_path; do
 
-	adata="$(basename "$filename")"
-	adata_short="${adata%_raw.h5ad}"
+	algorithm="$(basename "$algorithm_path")"
 
-	echo "Processing file: ${adata}"
-
-	# Extract cell-type from anndata
-	cell_type="$(h5dump -d "/obs/cell_type/categories" "$filename" |
-        	awk '/^   DATA {/,/}/' |
-        	grep -e '   ([0-9]*):' |  
-		awk -F '"' '{ for(i=2; i<=NF; i+=2) print $i}')"
-
-	n_cell_types=$(printf "%s\n" "$cell_type" | wc -l)
-
-	if [[ "$n_cell_types" -ne 1 ]]; then
-
-		echo "More than one cell type! <${cell_type}> $n_cell_types"
-		exit 1
-
-	fi
+	echo "$algorithm"
 
 
-	case "$USE_CLUSTER" in
+	while IFS= read -r -d '' peak_set_path; do
 
-		false )
+		peak_set="$(basename "$peak_set_path")"
 
-			python code/helpers/python/pre-annotate_footprint_anndata.py \
-				-a "${FOOTPRINTS_DIR}/${adata}" \
-				-o "${FOOTPRINTS_DIR}/${adata_short}_pre-annotated.h5ad" \
-				-f "$GROUPED_FRAG_FILES_DIR/%d_${cell_type}.tsv.gz" \
-				-r "$ATAC_PEAKS_H5AD_NEW" \
-				-u \
-				-k "grouping_col:donor,filter_col:cell_type, filter_key:${cell_type}, obs_map_col:index"
-				#-F "cell_type:${cell_type}" \
-			;;
+		if [[ "$peak_set" == *old* ]]; then
 
-		true )
+			continue
 
-			job_id="pre-annotate_footprints_$(date '+%Y-%m-%d')_${adata_short}_BORGS"
+		fi
+
+		echo -e "\t$peak_set"
+
+
+		cmd_list=()
+
+		while IFS= read -r -d '' cell_type_path; do
+
+			cell_type="$(basename "$cell_type_path")"
+
+			echo -e "\t\t$cell_type"
+
+
+			cmd_main="python code/helpers/python/pre-annotate_footprint_anndata.py \
+						-a '${FOOTPRINTS_DIR}/${algorithm}/${peak_set}/${CT_MAP_ID}/${cell_type}/footprints_raw.h5ad' \
+						-o '${FOOTPRINTS_DIR}/${algorithm}/${peak_set}/${CT_MAP_ID}/${cell_type}/footprints_pre-annotated.h5ad' \
+						-f '$GROUPED_FRAG_FILES_DIR/${cell_type}/%d.tsv.gz' \
+						-r '$ATAC_PEAKS_PROCESSED_H5AD' \
+						-u \
+						-k 'grouping_col:donor,filter_col:cell_type, filter_key:${cell_type}, obs_map_col:index'"
+						
+			cmd_main="$(echo $cmd_main | tr '\t' ' ')"
+
+
+			case "$USE_CLUSTER" in
+
+				false )
+
+					eval "$cmd_main"
+					;;
+
+				true )
+
+					cmd_list+=("$cmd_main")
+					;;
+
+			esac
+
+
+		done < <(find "${peak_set_path}/${CT_MAP_ID}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+
+		## Jobs
+
+		if [[ "$USE_CLUSTER" == "true" ]]; then
+		
+			job_id="pre-annotate_footprints_$(date '+%Y-%m-%d')_${algorithm:0:4}_${peak_set}"
+
 			bsub <<EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=100G]"
@@ -117,21 +144,17 @@ source "$HOME/.bash_profile"
 load-micromamba
 micromamba activate $MAIN_ENV
 
-python code/helpers/python/pre-annotate_footprint_anndata.py \
-	-a "${FOOTPRINTS_DIR}/${adata}" \
-	-o "${FOOTPRINTS_DIR}/${adata_short}_pre-annotated.h5ad" \
-	-f "$GROUPED_FRAG_FILES_DIR/%d_${cell_type}.tsv.gz" \
-	-r "$ATAC_PEAKS_H5AD_NEW" \
-	-u \
-	-k "grouping_col:donor,filter_col:cell_type_custom, filter_key:${cell_type}, obs_map_col:index"
+$(for cmd in "${cmd_list[@]}"; do
+
+	echo "$cmd"
+
+done)
 EOF
-			#-F "cell_type:${cell_type}" \
-			;;
 
-		* )
-			:
-			;;
-	
-	esac
+		fi
 
-done < <(find "${FOOTPRINTS_DIR}" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -iname "*_raw.h5ad" -print0)
+	done < <(find "${algorithm_path}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+done < <(find "${FOOTPRINTS_DIR}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+

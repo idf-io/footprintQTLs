@@ -235,14 +235,13 @@ pre-annotate_footprint_adata.py
     - :: Annotate the anndata object with
          donor, donor_id, ncells, nfrags, nins per donor and obs and var metadata from reference anndata
     - R:
-        - t: 8' compute
-        - m: 45G
+        - bsub: 45G, 25'
     - I:
-        - FOOTPRINTS_DIR/ footprints_<CT>_raw.h5ad
-        - GROUPED_FRAG_FILES_DIR/ <donor>_<CT>.tsv.gz
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/footprints_raw.h5ad
+        - GROUPED_FRAG_FILES_DIR/<cell_type>/<donor>.tsv.gz
         - ATAC_PEAKS_H5AD_NEW
     - O:
-        - FOOTPRINTS_DIR/ footprints_<CT>_pre-annotated.h5ad
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/footprints_pre-annotated.h5ad
     - A:
         - Group fragment files generated above contain 
           all cells and fragments used for coverage and footprint computation.
@@ -251,9 +250,10 @@ pre-annotate_footprint_adata.py
           was used to create the current anndata object. 
     - L: process_footprint_adata.ipynb
     - D: compute_footprints.bash
-    - T: #cluster #annotation #simple-launcher #latest-launcher #simple-bsub
+    - T: #cluster #annotation #simple-launcher #latest-launcher #simple-bsub #problem
     - Todo:
         - Check if first A is true.
+        - There seems to be donor-ct groups in the reference adata with >0 cells which are not found in the query adata
 
 
 process_footprint_adata.bash

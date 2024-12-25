@@ -160,3 +160,24 @@ cmp_two_dirs() {
 	done
 	
 }
+
+
+
+
+
+
+# Anndata
+
+extract_homogeneous_col_from_anndata_obs() {
+
+	local filename="$1"
+	local col="$2"
+
+	value="$(h5dump -d "/obs/${col}/categories" "$filename" |
+				awk '/^   DATA {/,/}/' |
+				grep -e '   ([0-9]*):' |  
+				awk -F '"' '{ for(i=2; i<=NF; i+=2) print $i}')"
+
+	echo "$value"
+
+}

@@ -165,17 +165,36 @@ def compute_footprints(
                 
 
     # Create anndata
+
     adata = ad.AnnData(csr_matrix(arr))
     adata.obs_names = donors_sorted
-    adata.var_names = peak_ids
+
+
+    peak_ids_classic = []
+
+    for peak_idx, peak_id in enumerate(peak_ids):
+
+        fields = peaks[peak_id]
+        peak_ids_classic.append('{}:{}:{}:{}:*:{}'.format(fields[0],
+                                                          fields[1],
+                                                          fields[2] - fields[1],
+                                                          fields[2],
+                                                          peak_idx))
+
+    adata.var_names = peak_ids_classic
+    adata.var['centre_snp'] = peak_ids
+
 
     # Annotate
+
     adata.obs['donor'] = adata.obs.index
 
     if obs_annotation:
         adata.obs[obs_annotation[0]] = obs_annotation[1]
 
+
     # Save anndata
+
     utils.create_dir(out_adata)
     adata.write(out_adata, compression='gzip')
 

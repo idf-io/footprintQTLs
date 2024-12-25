@@ -167,13 +167,6 @@ while IFS= read -r -d '' cell_type_dir; do
 		peak_set="${peak_set_file%.bed}"
 		peak_set="${peak_set/peaks_/}"
 
-		if [[ "$peak_set" != "ca-qtls_pm1k_variant-centred_15bp" ]] && \
-		   [[ "$peak_set" != "ca-qtls_pm1k_variant-centred_25bp" ]]; then
-
-			continue
-
-		fi
-
 		echo -e "\t${peak_set}"
 
 

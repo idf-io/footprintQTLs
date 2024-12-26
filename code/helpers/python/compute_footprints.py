@@ -177,8 +177,8 @@ def compute_footprints(
         fields = peaks[peak_id]
         peak_ids_classic.append('{}:{}:{}:{}:*:{}'.format(fields[0],
                                                           fields[1],
-                                                          fields[2] - fields[1],
                                                           fields[2],
+                                                          fields[2] - fields[1],
                                                           peak_idx))
 
     adata.var_names = peak_ids_classic

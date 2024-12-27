@@ -155,11 +155,17 @@ while IFS= read -r -d '' algorithm_path; do
 
 		if [[ "$USE_CLUSTER" == "true" ]]; then
 
+
+			# !!!!!
+			# Job submission seems to fail due to 1/2 reasons, investigate if going to make changes:
+			# 	- job_id name too long
+			# 	- mem request: 100G works other may not
+
 			job_id="p_fp_a_$(date '+%Y-%m-%d')_${algorithm:0:4}_${peak_set}"
 
 			bsub <<EOF
 #!/usr/bin/env bash
-#BSUB -R "rusage[mem=10G]"
+#BSUB -R "rusage[mem=100G]"
 #BSUB -q medium
 #BSUB -cwd ${PROJECT_DIR}
 #BSUB -J ${job_id}

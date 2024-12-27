@@ -285,7 +285,8 @@ process_footprint_adata.bash
         - Intended to be run twice
             1) Generate the counts per peak histogram. Evaluate optimal threshold.
             2) Run again with threshold
-    - T: #job-array #filter-ncells #threshold #donors-artifact #subset #donors-artifact-redundant? #filter-peak-counts #histogram
+        - Job submission seems to fail with long job_id name or mem requirement
+    - T: #job-array #filter-ncells #threshold #donors-artifact #subset #donors-artifact-redundant? #filter-peak-counts #histogram #job-error
 
 
 footprints_eda.bash

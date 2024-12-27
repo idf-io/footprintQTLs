@@ -189,7 +189,6 @@ def process_adata(adata):
     return adata_processed
 
 
-
 def main():
 
     args = parse_args()
@@ -207,7 +206,7 @@ def main():
     adata_processed = adata[adata.obs['n_cells'] > args.min_cells].copy() # Filter min n_cells per donor,
                                                                           # should be done at footprint creation idealy
     adata_processed = subset_common_donors(adata_processed, GENOTYPES_TSV, GENOTYPE_PCS_TSV) # Remove donors not
-    adata_processed = adata_processed[:, adata_processed.var['peak_counts_total'] > args.min_peak_counts]
+    adata_processed = adata_processed[:, adata_processed.var['peak_counts_total'] > args.min_peak_counts].copy()
 
     # Peak counts histogram
     peak_counts_png = os.path.join(os.path.dirname(args.output_anndata), 'metadata', 'peak_counts_total_histogram.png')
@@ -219,7 +218,7 @@ def main():
     adata_processed.write(args.output_anndata, compression='gzip')
 
     # Process
-    check_anndata(adata, min_obs=20, light=False) # Don't permit NaNs in X
+    check_anndata(adata_processed, min_obs=0, light=False) # Don't permit NaNs in X
     adata_processed = process_adata(adata_processed)
         
     # Save

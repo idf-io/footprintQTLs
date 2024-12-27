@@ -89,7 +89,7 @@ def plot_peak_count_histogram(adata, out_file: str):
     plt.ylabel('#', fontsize=14)
 
     out_file_name = os.path.basename(out_file)
-    out_file_restricted = os.path.join(os.path.dirname(out_file), f'{os.path.splitext(out_file_name)[0]}_resricted-range_{os.path.splitext(out_file_name)[1]}')
+    out_file_restricted = os.path.join(os.path.dirname(out_file), f'{os.path.splitext(out_file_name)[0]}_resricted-range{os.path.splitext(out_file_name)[1]}')
     plt.savefig(out_file_restricted, dpi=300, bbox_inches='tight')
 
 

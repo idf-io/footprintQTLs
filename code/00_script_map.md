@@ -268,17 +268,24 @@ process_footprint_adata.bash
     - R:
         - bsub: 4G, 20'
     - I:
-        - FOOTPRINTS_DIR/ footprints_<CT>_pre-annotated.h5ad
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/footprints_pre-annotated.h5ad
         - GENOTYPES_TSV
         - GENOTYPE_PCS_TSV
     - O:
-        - FOOTPRINTS_DIR/ footprints_<CT>_processed.h5ad
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/
+                                                            footprints_processed.h5ad
+                                                            metadata/
+                                                                    peak_counts_total_histogram.h5ad
+                                                                    peak_counts_total_histogram_restricted.h5ad
     - L:
         - footprints_eda_notebook.ipynb
         - footprints_eda_all-cts_notebook.ipynb
     - D: pre-annotate_footprint_adata.bash
-    - N: Currently executes but doesn't end. Probably some danling open file.
-    - T: #job-array #filter-ncells #threshold #donors-artifact #subset #donors-artifact-redundant?
+    - N:
+        - Intended to be run twice
+            1) Generate the counts per peak histogram. Evaluate optimal threshold.
+            2) Run again with threshold
+    - T: #job-array #filter-ncells #threshold #donors-artifact #subset #donors-artifact-redundant? #filter-peak-counts #histogram
 
 
 footprints_eda.bash

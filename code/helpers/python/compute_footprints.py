@@ -104,7 +104,7 @@ def compute_footprints(
                 cov = bw.values(*peaks[peak_id][0:3])
                 cov = np.nan_to_num(cov, 0)
 
-                if js_approach == 'all_zeros_to_uniform':
+                if algorithm == 'js_divergence' and js_approach == 'all_zeros_to_uniform':
 
                     if np.sum(cov) == 0:
 
@@ -121,10 +121,13 @@ def compute_footprints(
 
     ## Compute profiles
 
-    arr = np.empty([len(donor_map), len(peaks.keys())])
+    arr_metric = np.empty([len(donor_map), len(peaks.keys())])
+    arr_counts = np.empty([len(donor_map), len(peaks.keys())])
 
     for peak_idx, peak_id in enumerate(peak_ids):
 
+
+        # Compute metric
 
         if algorithm == 'js_divergence':
 
@@ -137,7 +140,7 @@ def compute_footprints(
 
                     js_dist = js_distance(cov_mean, covs[peak_id][donor], base = 2)
                     js_div = js_dist ** 2
-                    arr[donor_idx, peak_idx] = js_div
+                    arr_metric[donor_idx, peak_idx] = js_div
 
                 elif js_approach == 'norm_total_pseudocount':
 
@@ -151,22 +154,40 @@ def compute_footprints(
                     js_dist = js_distance(p, q, base = 2)
                     js_div = js_dist ** 2
 
-
-        elif algorithm == 'counts':
-
-            for donor_idx, donor in enumerate(donors_sorted):
-
-                arr[donor_idx, peak_idx] = np.sum(covs[peak_id][donor])
+                    arr_metric[donor_idx, peak_idx] = js_div
 
 
         elif algorithm == 'wasserstein_dist':
 
             raise ValueError('Not implemented: wasserstein_dist')
+
+
+        # Always compute counts
+
+        for donor_idx, donor in enumerate(donors_sorted):
+
+            arr_counts[donor_idx, peak_idx] = np.sum(covs[peak_id][donor])
+
+
+            if algorithm == 'counts':
+
+                arr_metric = arr_counts
+
+
                 
 
-    # Create anndata
+    ## Create anndata
 
-    adata = ad.AnnData(csr_matrix(arr))
+    if algorithm == 'js_divergence':
+
+        # Scipy bug in `scipy.spatial.distance.jensenshannon`:
+        #   returns NaNs when distributions are very closely similar but not exactly the same
+        #   - Issue: https://github.com/scipy/scipy/issues/20083
+        #   - Possible solution: https://github.com/scipy/scipy/pull/20786
+        arr_metrix = np.nan_to_num(arr_metric, 0)
+
+
+    adata = ad.AnnData(csr_matrix(arr_metric))
     adata.obs_names = donors_sorted
 
 
@@ -183,6 +204,7 @@ def compute_footprints(
 
     adata.var_names = peak_ids_classic
     adata.var['centre_snp'] = peak_ids
+    adata.var['peak_counts_total'] = np.sum(arr_counts, axis=0).astype(int)
 
 
     # Annotate

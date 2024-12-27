@@ -218,6 +218,12 @@ compute_atac-coverage_bw.bash
         - GROUPED_BIGWIG_FILES_DIR/<cell_type>/<donor>.bw
     - L: compute_footprints.bash
     - D: join_fragments_by-groups.bash
+    - N:
+        - Used scipy.spatial.distance.jensenshannon has a bug.
+            - Returns NaNs when distributions are very closely similar but not exactly the same.
+            - Solved by replacing NaNs with 0s.
+            - Issue: https://github.com/scipy/scipy/issues/2008
+            - Possible solution: https://github.com/scipy/scipy/pull/20786
     - T: #jobs #cluster #job-array #footprint #discard-empty-input
 
 compute_footprints.bash

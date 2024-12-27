@@ -10,7 +10,7 @@ from pandas_utils import aggregate_df_by_columns
 
 
 
-def check_anndata(adata, min_obs: int = 20, obs_criteria_kwargs: List[Dict[str, Callable]] = []):
+def check_anndata(adata, min_obs: int = 20, obs_criteria_kwargs: List[Dict[str, Callable]] = [], light: bool = False):
     """
     Check anndata integrity for criteria:
 	- Unique obs and vars
@@ -19,12 +19,17 @@ def check_anndata(adata, min_obs: int = 20, obs_criteria_kwargs: List[Dict[str, 
         - custom .obs criteria
     """
 
-    # Data integrity
+    ## Data integrity
     assert adata.obs.index.nunique() == len(adata.obs)               # Obs unique
     assert adata.var.index.nunique() == len(adata.var)               # Var unique
-    assert not np.any(np.isnan(adata.X.data))                        # Non NaNs
 
-    # obs criteria
+    if not light:
+        assert not np.any(np.isnan(adata.X.data))                        # Non NaNs
+        assert not any(adata.obs['donor_id'].isna())                     # obs['donor_id'] complete
+
+
+    ## obs criteria
+
     for c in obs_criteria_kwargs:
 
         assert len(c.keys()) == 2
@@ -36,13 +41,15 @@ def check_anndata(adata, min_obs: int = 20, obs_criteria_kwargs: List[Dict[str, 
 
         assert func(adata.obs[col]), f'obs_criteria_kwargs check failed: col={col}, func={func}'
 
-    # Min
+
+    ## Min
+
     if min_obs:
         assert adata.shape[0] > min_obs, "Not enough obs/donors!" # Min donors
 
 
-    assert not any(adata.obs['donor_id'].isna())                     # obs['donor_id'] complete
     assert not adata.obs['donor_id'].nunique == len(adata.obs)       # obs['donor_id'] unique
+
 
 
 def subset_common_donors(adata, genotypes_tsv: str, genotype_pcs_tsv: str):

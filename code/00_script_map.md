@@ -326,18 +326,17 @@ footprints_eda_all-cts.bash
 make_extra_files_footprints_cell-type-level.ipynb
     - :: Make some extra files from footprints adata
         - Peak beds
-    - R: jupyterhub: <1'
+    - R: jupyterhub: 1'
     - I:
-        - FOOTPRINTS_DIR/ footprints_<CT>_processed.h5ad
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/<cell_type>/footprints_processed.h5ad
     - O:
-        - FOOTPRINTS_METADATA_DIR/ <CT>/ peaks.bed
-    - A:
-        - Peaks format: 1-based fully open
+        - FOOTPRINTS_DIR/<algorithm>/<peak_set>/<CT_MAP_ID>/<cell_type>/metadata/peaks.bed
     - D:
-        - compute_footprints.bash
+        - pre-annotate_footprint_adata.bash
     - L:
         - calculations/*
-    - T: #footprints #locations #phenotype #bed
+        - make_matrix-eqtl_input_footprint-qtls.bash
+    - T: #footprints #locations #phenotype #bed #coordinates #0ho
 
 
 make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)

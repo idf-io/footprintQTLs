@@ -48,7 +48,7 @@ SNP_LOCS_BED = f'data/intermediate-data/datasets/{DATASET}/genotype/snp_location
 
 
 
-MATRIX_EQTL_INPUT_DIR = f'data/intermediate-data/datasets/{DATASET}/matrix-eqtl/footprints'
-MATRIX_EQTL_OUTPUT_DIR = f'results/datasets/{DATASET}/matrix-eqtl/footprints/{FOOTPRINT_APPROACH}/{CT_MAP_ID}'
+MATRIX_EQTL_INPUT_DIR = f'data/intermediate-data/datasets/{DATASET}/matrix-eqtl'
+MATRIX_EQTL_OUTPUT_DIR = f'results/datasets/{DATASET}/matrix-eqtl'
 
 CHROM_SIZES="data/GRCh38-p14/hg38.chrom.sizes"

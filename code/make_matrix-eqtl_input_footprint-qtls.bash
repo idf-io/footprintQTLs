@@ -6,12 +6,12 @@
 # 	- ct-specific processed and pre-annotated footprint anndatas
 # 	- genotype tsv and pcs
 
-set -eou pipefail
-
 ### Setup ###
 
-# Variables
-#
+set -eou pipefail
+
+## Variables
+
 MODE="unset"
 USE_CLUSTER=false
 
@@ -21,7 +21,7 @@ while getopts "m:c" opt; do
 
 		m ) MODE=$OPTARG ;;
 		c ) USE_CLUSTER=true ;;
-		? ) echo "Usage: $0 [-c] cluster [-m mode {single-test, bulk-test}"; exit 1;;
+		? ) echo "Usage: $0 [-c] cluster [-m mode {single-test, peak-tests, bulk-tests}"; exit 1;;
 
 	esac
 
@@ -29,7 +29,7 @@ done
 
 if [[ "$MODE" == "unset" ]]; then
 
-	echo "Usage: $0 [-c] cluster [-m mode {single-test, bulk-test}"
+	echo "Usage: $0 [-c] cluster [-m mode {single-tests, peak-tests, bulk-tests}"
 	exit 1
 
 fi
@@ -37,80 +37,95 @@ fi
 DATE="$(date +"%Y-%m-%d")"
 
 
-# Environment
+## Environment
 
 PROJECT_DIR=".."
 PROJECT_DIR="$(realpath ${PROJECT_DIR})"
 cd $PROJECT_DIR
 
-source code/glob_vars.bash # FOOTPRINTS_DIR, MATRIX_EQTL_INPUT_DIR, MAIN_ENV
+source code/glob_vars.bash # FOOTPRINTS_DIR, MATRIX_EQTL_INPUT_DIR, MAIN_ENV, CT_MAP_ID
 
 if [[ "$USE_CLUSTER" == "false" ]]; then
 
 	source $HOME/.bash_profile
 	load-micromamba
-	micromamba activate main04
+	micromamba activate main06
 
 fi
 
 
 ### SCRIPT ###
 
-#file="${FOOTPRINTS_DIR}/footprints_Glia_processed.h5ad"
+while IFS= read -r -d '' algorithm_path; do
 
-while IFS= read -r -d '' adatas_long; do
+	algorithm="$(basename "$algorithm_path")"
 
-	#if [[ "$adatas_long" == "results/datasets/hca_brain-organoids/atac-seq/footprints/js_divergence/approach_2024-09-12/footprints_Glia_processed.h5ad" ]]; then
-		#continue
-	#fi
-
-	adata="$(basename $adatas_long)"
-	adata_short="${adata%_processed.h5ad}"
-	cell_type="$(echo "$adata_short" | cut -d '_' -f 2)"
-	ipynb_out="${MATRIX_EQTL_INPUT_DIR}/${cell_type}/${MODE}/make_matrix-eqtl_input_footprint-qtls.ipynb"
+	echo "$algorithm"
 
 
-	# Create ct-specific notebook
+	while IFS= read -r -d '' peak_set_path; do
 
-	echo "Processing file: ${ipynb_out}"
+		peak_set="$(basename "$peak_set_path")"
 
-	
-	mkdir -p "$(dirname "$ipynb_out")"
+		if [[ "$peak_set" == *old* ]]; then
 
-	cat "code/make_matrix-eqtl_input_footprint-qtls.ipynb" |
-	sed '/^    "    PROJECT_DIR = '\''manual'\''/c\    "    PROJECT_DIR = '\'"${PROJECT_DIR}"\''\\n",' |
-	sed '/^    "cell_type = str(/c\    "cell_type = '\'"$cell_type"\''\\n",' |
-	sed '/^    "RUN_ID = /c\    "RUN_ID = '\'"meqtl_io_${DATE}_${CT_MAP_ID}_${DATASET}"\''\\n",' |
-	sed '/^    "mode = /c\    "mode = '\'"$MODE"\''\\n",' > "$ipynb_out"
+			continue
+
+		fi
+
+		if [[ "$peak_set" != *pm1k* ]]; then
+
+			continue
+
+		fi
+
+		echo -e "\t$peak_set"
 
 
-	case "$USE_CLUSTER" in
+		cmd_list=()
 
-		false )
+		while IFS= read -r -d '' cell_type_path; do
+
+			cell_type="$(basename "$cell_type_path")"
+
+			echo -e "\t\t$cell_type"
+
 			
-			# Remove old files and create dir
+			# Create ipynb notebook & customize
+			
+			ipynb_out="${MATRIX_EQTL_INPUT_DIR}/footprints/${algorithm}/${peak_set}/${CT_MAP_ID}/${cell_type}/${MODE}/make_matrix-eqtl_input_footprint-qtls.ipynb"
+			category="${algorithm}/${peak_set}/${CT_MAP_ID}/${cell_type}"
 
-			if [[ -d "${MATRIX_EQTL_INPUT_DIR}/${cell_type}/${MODE}" ]]; then
+			mkdir -p "$(dirname "$ipynb_out")"
 
-				rm -rf "${MATRIX_EQTL_INPUT_DIR}/${cell_type}/${MODE}"
+			cat "code/make_matrix-eqtl_input_footprint-qtls.ipynb" |
+				sed '/^    "    PROJECT_DIR = '\''manual'\''/c\    "    PROJECT_DIR = '\'"${PROJECT_DIR}"\''\\n",' |
+				sed '/^    "category = str(/c\    "category = '\'"$category"\''\\n",' |
+				sed '/^    "cell_type = str(/c\    "cell_type = '\'"$cell_type"\''\\n",' |
+				sed '/^    "mode = /c\    "mode = '\'"$MODE"\''\\n",' > "$ipynb_out"
 
-			fi
 
-			mkdir -p "$(dirname $ipynb_out)"
+			## Run
 
+			case "$USE_CLUSTER" in
 
-			# Execute notebook
-			jupyter nbconvert --to notebook --execute --allow-error --inplace "$ipynb_out"
+				false )
+					
+					# Remove old files
+					find "$(dirname "$ipynb_out")" -mindepth 1 -depth ! -name "$(basename "$ipynb_out")" -exec rm -rf {} \;
 
-			;;
+					# Execute notebook
+					jupyter nbconvert --to notebook --execute --allow-error --inplace "$ipynb_out"
 
-		true )
+					;;
 
-			job_id="meqtl_io_footprints_${DATE}_${cell_type}"
-			bsub <<EOF
+				true )
+
+					job_id="meqtl_i_fp_${DATE}_${algorithm:0:4}_${peak_set}_${cell_type}"
+					bsub <<EOF
 #!/usr/bin/env bash
-#BSUB -R "rusage[mem=300G]"
-#BSUB -q highmem
+#BSUB -R "rusage[mem=100G]"
+#BSUB -q long
 #BSUB -cwd ${PROJECT_DIR}
 #BSUB -J ${job_id}
 #BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.out
@@ -124,22 +139,19 @@ source "$HOME/.bash_profile"
 load-micromamba
 micromamba activate $MAIN_ENV
 			
-# Remove old files and create dir
+# Remove old files
+find "$(dirname "$ipynb_out")" -mindepth 1 -depth ! -name "$(basename "$ipynb_out")" -exec rm -rf {} \\;
 
-if [[ -d "${MATRIX_EQTL_INPUT_DIR}/${MODE}/${cell_type}" ]]; then
-
-	rm -rf "${MATRIX_EQTL_INPUT_DIR}/${MODE}/${cell_type}"
-
-fi
-
-mkdir -p "$(dirname $ipynb_out)"
-
+# Execute notebook
 jupyter nbconvert --to notebook --execute --allow-errors --inplace "$ipynb_out"
 EOF
 
-			;;
+					;;
 
-	esac
+			esac
 
-done < <(find "${FOOTPRINTS_DIR}" -mindepth 1 -maxdepth 1 \( -type f -o -type l \) -iname "*_processed.h5ad" -print0)
-#done < <(printf '%s\0' "$file")
+		done < <(find "${peak_set_path}/${CT_MAP_ID}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+	done < <(find "${algorithm_path}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+done < <(find "${FOOTPRINTS_DIR}" -mindepth 1 -maxdepth 1 -type d -print0)

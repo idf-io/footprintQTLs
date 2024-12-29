@@ -343,7 +343,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
     - :: Make phenotype, genotype, peak location, snp location and covariates(footprint PCs and genotype PCs) tsvs
     - R:
         - bsub:
-            - mode=single-tests: 6G, 100-190'
+            - mode=single-tests: 7G, -190'
             - mode=bulk-tests: 215G, 10'
     - I:
         - CT_MAP_JSON
@@ -373,7 +373,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
     - A: donors/obs in anndata are also found in genotype databases (processing step in process_footprint_adata.ipyb)
     - D: process_footprint_adata.bash
     - L: call_footprint-qtls_matrix-eqtl.bash
-    - T: #qtls #io #memory-control #garbage-collector
+    - T: #qtls #io #memory-control #garbage-collector #coordinates #0ho
     - Todos:
         - [ ] Make individual steps functions if reused in other scenarios
     - Note:

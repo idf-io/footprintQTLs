@@ -87,12 +87,61 @@ def list_files_and_links(
     return search_results
 
 
-def list_dirs(directory='.'):
+def list_dirs(directory: str = '.', exclude_match: list = []):
     """
     List directories in query directory. Depth=1
     """
 
-    return [e for e in os.listdir(directory) if os.path.isdir(os.path.join(directory, e))]
+    dirs = [d for d in os.listdir(directory)
+            if os.path.isdir(os.path.join(directory, d)) and not any(string in d for string in exclude_match)]
+
+    return dirs
+
+
+def list_dirs_recursive(directory: str, max_depth: int, current_depth: int = 0, exclude_match: list = []):
+    '''
+    Lists subdirectories that are either leaf nodes or at max_depth.
+    
+    Args:
+        - directory (str): The root directory to start from
+        - max_depth (int): Maximum depth to traverse
+        - current_depth (int): Current recursion depth (used internally)
+    
+    Returns:
+        list: List of subdirectory paths meeting the criteria
+    '''
+
+    if current_depth > max_depth:
+
+        return []
+    
+
+    subdirs = [os.path.join(directory, d) for d in list_dirs(directory, exclude_match=exclude_match)]
+
+
+    if current_depth == max_depth:
+
+        return subdirs
+    
+    result = []
+    
+    for subdir in subdirs:
+
+        # Leaf nodes
+
+        sub_subdirs = [d for d in list_dirs(subdir, exclude_match=exclude_match)]
+        
+        if not sub_subdirs:
+
+            result.append(subdir)
+
+        # Recursion
+
+        else:
+
+            result.extend(list_dirs_recursive(subdir, max_depth, current_depth + 1))
+            
+    return result
 
 
 def read_rownames(file: str,

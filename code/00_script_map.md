@@ -343,7 +343,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
     - :: Make phenotype, genotype, peak location, snp location and covariates(footprint PCs and genotype PCs) tsvs
     - R:
         - bsub:
-            - mode=single-tests: 7G, -190'
+            - mode=peak-tests: 7G, 140-250'
             - mode=bulk-tests: 215G, 10'
     - I:
         - CT_MAP_JSON
@@ -378,6 +378,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
         - [ ] Make individual steps functions if reused in other scenarios
     - Note:
         - Major parameter: mode={bulk-tests, single-tests, peak-tests}
+        - Prone to stochastic error when executed using the cluster
 
 call_footprint-qtls_matrix-eqtl.bash
     - :: Call QTLs on the footprint data

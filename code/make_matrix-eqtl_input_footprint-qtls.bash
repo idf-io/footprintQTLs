@@ -73,12 +73,6 @@ while IFS= read -r -d '' algorithm_path; do
 
 		fi
 
-		if [[ "$peak_set" != *pm1k* ]]; then
-
-			continue
-
-		fi
-
 		echo -e "\t$peak_set"
 
 

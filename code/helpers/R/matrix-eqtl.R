@@ -412,68 +412,89 @@ plot_results <- function(qtls.df, out.dir, alpha) {
 		create_parent_dir(out.dir)
 
 
-		## Nominal p-val histogram
+		## Nominal p-value plots
 
-		p <- ggplot(qtls.df, aes(x = pvalue)) +
-				geom_histogram(aes(y = after_stat(density)), bins = 100) +
-				geom_hline(yintercept = 1, color = 'blue', linetype = 'dashed', linewidth = 1) +
-				theme_classic() +
-				labs(y = 'P-values', x = 'Density') +
-				theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14))
+		if (length(qtls.df$pvalue < alpha) > 0) {
 
-		ggsave(file.path(out.dir, 'histogram_pval_nominal.png'), plot = p, width = 10, height = 6, dpi = 300)
+			## Histogram
 
+			p <- ggplot(qtls.df, aes(x = pvalue)) +
+					geom_histogram(aes(y = after_stat(density)), bins = 100) +
+					geom_hline(yintercept = 1, color = 'blue', linetype = 'dashed', linewidth = 1) +
+					theme_classic() +
+					labs(y = 'P-values', x = 'Density') +
+					theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14))
 
-		## FDR p-val histogram
-
-		p <- ggplot(qtls.df, aes(x = fdr)) +
-				geom_histogram(aes(y = after_stat(density)), bins = 100) +
-				geom_hline(yintercept = 1, color = 'blue', linetype = 'dashed', linewidth = 1) +
-				theme_classic() +
-				labs(y = 'P-values', x = 'Density') +
-				theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14))
-
-		ggsave(file.path(out.dir, 'histogram_pval_fdr.png'), plot = p, width = 10, height = 6, dpi = 300)
+			ggsave(file.path(out.dir, 'histogram_pval_nominal.png'), plot = p, width = 10, height = 6, dpi = 300)
 
 
-		## Manhattan plot nominal
+			## Manhattan plot
 
-		png(file.path(out.dir, 'manhattan-plot_nominal.png'))
-		manhattan(qtls.df,
-				  chr = 'snp_chr',
-				  bp = 'snp_pos',
-				  p = 'pvalue',
-				  snp = 'snp',
-				  suggestiveline = FALSE,
-				  genomewideline = -log10(alpha))
-		dev.off()
+			png(file.path(out.dir, 'manhattan-plot_nominal.png'))
+			manhattan(qtls.df,
+					  chr = 'snp_chr',
+					  bp = 'snp_pos',
+					  p = 'pvalue',
+					  snp = 'snp',
+					  suggestiveline = FALSE,
+					  genomewideline = -log10(alpha))
+			dev.off()
 
-	
-		## Manhattan plot FDR
+
+			## Q-Q plot
+
+			png(file.path(out.dir, 'qq-plot_nominal.png'))
+			qq(qtls.df$pvalue, main = 'p-value nominal')
+			dev.off()
+
+		} else {
+
+			warning('qtl.df empty!', call. = FALSE)
+			cat('qtl.df empty!\n')
+
+		}
+
+
+		if (length(qtls.df$fdr < alpha) > 0) {
+
+			## Histogram
+
+			p <- ggplot(qtls.df, aes(x = fdr)) +
+					geom_histogram(aes(y = after_stat(density)), bins = 100) +
+					geom_hline(yintercept = 1, color = 'blue', linetype = 'dashed', linewidth = 1) +
+					theme_classic() +
+					labs(y = 'P-values', x = 'Density') +
+					theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14))
+
+			ggsave(file.path(out.dir, 'histogram_pval_fdr.png'), plot = p, width = 10, height = 6, dpi = 300)
+
 		
-		png(file.path(out.dir, 'manhattan-plot_fdr.png'))
-		manhattan(qtls.df,
-				  chr = 'snp_chr',
-				  bp = 'snp_pos',
-				  p = 'fdr',
-				  snp = 'snp',
-				  suggestiveline = FALSE,
-				  genomewideline = -log10(alpha))
-		dev.off()
-	
+			## Manhattan plot
+			
+			png(file.path(out.dir, 'manhattan-plot_fdr.png'))
+			manhattan(qtls.df,
+					  chr = 'snp_chr',
+					  bp = 'snp_pos',
+					  p = 'fdr',
+					  snp = 'snp',
+					  suggestiveline = FALSE,
+					  genomewideline = -log10(alpha))
+			dev.off()
+		
+		
 
-		## Q-Q plot nominal
+			## Q-Q plot
 
-		png(file.path(out.dir, 'qq-plot_nominal.png'))
-		qq(qtls.df$pvalue, main = 'p-value nominal')
-		dev.off()
-	
+			png(file.path(out.dir, 'qq-plot_fdr.png'))
+			qq(qtls.df$fdr, main = 'p-value FDR')
+			dev.off()
 
-		## Q-Q plot FDR
+		} else {
 
-		png(file.path(out.dir, 'qq-plot_fdr.png'))
-		qq(qtls.df$fdr, main = 'p-value FDR')
-		dev.off()
+			warning('qtl.df empty!', call. = FALSE)
+			cat('qtl.df empty!\n')
+
+		}
 
 	}, error = function(e) {handle_error(e, sys.calls(), quit=TRUE)})
 

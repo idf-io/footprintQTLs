@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#
+
 # Plot footprintQTL results
 #
 # Requires: 
@@ -60,32 +60,14 @@ PROJECT_DIR=".."
 PROJECT_DIR="$(realpath ${PROJECT_DIR})"
 cd $PROJECT_DIR
 
-source code/glob_vars.bash # MATRIX_EQTL_OUTPUT_DIR
+source code/glob_vars.bash # MATRIX_EQTL_OUTPUT_DIR, CT_MAP_ID
 
-case "$USE_CLUSTER" in
+if [[ "$USE_CLUSTER" == "false" ]]; then
 
-	false )
+	source "${HOME}/.bash_profile"
+	load-r-440
 
-		source "${HOME}/.bash_profile"
-		load-r-440
-		;;
-
-	true )
-
-		## Cluster relevant variables
-
-		njobs=0
-		jobs_file="code/bsub/logs/plot_fqtls_$(date -I).commands"
-
-		if [[ -f "$jobs_file" ]]; then
-
-			rm "$jobs_file"
-
-		fi
-
-		;;
-
-esac
+fi
 
 
 ## User variables
@@ -93,137 +75,189 @@ esac
 ALPHA=0.01 # Aygun-2023 caQTLS: 0.05
 
 
+
 ### SCRIPT ###
 
+while IFS= read -r -d '' algorithm_path; do
 
-## Iterate over cell-types
+	algorithm="$(basename "$algorithm_path")"
 
-while IFS= read -r -d '' cell_type_dir; do
+	 #if [[ "$algorithm" != "counts" ]]; then
+		 #continue
+	 #fi
 
-	echo "Processing file: ${cell_type_dir}"
-
-	cell_type="$(basename "$cell_type_dir")"
-	in_dir="${cell_type_dir}/${MODE}"
-	out_dir="${MATRIX_EQTL_OUTPUT_DIR}/${cell_type}/${MODE}/plots"
+	echo "$algorithm"
 
 
-	## Clean old run files and create dir
-	
-	if [[ -d "$out_dir" ]]; then
-	
-		rm -rf "$out_dir" 
-	
+	if [[ "$USE_CLUSTER" == "true" ]]; then
+
+		njobs=0
+		jobs_file="code/bsub/logs/plot_fqtls_$(date -I)_${algorithm:0:4}.commands"
+
+		if [[ -f "$jobs_file" ]]; then
+
+			rm "$jobs_file"
+
+		fi
+
 	fi
-	
-	mkdir -p "$out_dir"
 
 
-	## Run function
+	while IFS= read -r -d '' peak_set_path; do
 
-	case "$MODE" in
+		peak_set="$(basename "$peak_set_path")"
 
-		bulk-tests )
+		if [[ "$peak_set" == *old* ]]; then
 
-			in_file="${in_dir}/qtls_all.tsv"
+			continue
 
-			cmd_main="Rscript --verbose 'code/plot_qtl_results_footprints.R' \
-					'$in_file' \
-					'$out_dir' \
-					'$MODE' \
-					'$ALPHA'"
+		fi
 
-			case "$USE_CLUSTER" in
+		if [[ "$peak_set" != *pm1k* ]]; then
+			continue
+		fi
 
-				false )
-
-					eval "$cmd_main"
-
-					;;
-
-				true )
-
-					njobs=$(( njobs + 1 ))
-					echo $cmd_main >> "$jobs_file"
-					;;
-
-			esac
-
-			;;
+		echo -en "\t$peak_set\n"
 
 
-		## Run
+		while IFS= read -r -d '' cell_type_path; do
 
-		single-tests | peak-tests )
-		
-			## Create collected qtls.tsv
+			cell_type="$(basename "$cell_type_path")"
 
-			in_file="${in_dir}/qtls_all.tsv"
+			 #if [[ "$cell_type" != "DL-EN" ]]; then
+				 #continue
+			 #fi
+
+			echo -e "\t\t$cell_type"
+
+
+			in_dir="${cell_type_path}/${MODE}"
+			out_dir="${cell_type_path}/${MODE}/plots"
+
+
+			## Clean old run files and create dir
 			
-			# Clean old file
-			if [[ -f "$in_file" ]]; then
+			if [[ -f "$out_dir" ]]; then
 			
-				rm "$in_file" 
+				rm -r "${in_dir}/qtls_all_fdr.tsv" 
 			
 			fi
 
-			tests_bed="${MATRIX_EQTL_OUTPUT_DIR}/${cell_type}/${MODE}/tests_snp_peak_pairs.bed"
-
-			cat "${in_dir}/tests/"* > "$in_file"
-
-			n_significant="$(cat "$in_file" | wc -l)"
-			n_tests="$(cat "$tests_bed" | wc -l)"
-			n_missing_tests=$((n_tests - n_significant))
-
-			# snp, gene, fdr_meqtl, pvalue, beta,
-			# snp_chr, snp_pos, snp_ref, snp_alt, peak_chr, peak_start, peak_end, peak_len
-			non_significant_placeholder=$'placeholder_snp\tplaceholder_peak\t1.0\t1.0\t0.0\t0\t0\tN\tN\t0\t0\t0\t501'
+			if [[ -d "$out_dir" ]]; then
+			
+				rm -rf "$out_dir" 
+			
+			fi
+			
+			mkdir -p "$out_dir"
 
 
-			cmd_make_in="seq $n_missing_tests | xargs -I {} echo '$non_significant_placeholder' >> '$in_file'"
+			## Run function
 
-			cmd_main="Rscript --verbose 'code/plot_qtl_results.R' \
-					'$in_file' \
-					'$out_dir' \
-					'$MODE' \
-					'$ALPHA'"
+			case "$MODE" in
 
+				bulk-tests )
 
-			case "$USE_CLUSTER" in
+					in_file="${in_dir}/qtls_all.tsv"
 
-				false )
+					cmd_main="Rscript --verbose 'code/plot_qtl_results_footprints.R' \
+							'$in_file' \
+							'$out_dir' \
+							'$MODE' \
+							'$ALPHA'"
 
-					eval "$cmd_make_in"
-					eval "$cmd_main"
+					case "$USE_CLUSTER" in
+
+						false )
+
+							eval "$cmd_main"
+
+							;;
+
+						true )
+
+							njobs=$(( njobs + 1 ))
+							echo $cmd_main >> "$jobs_file"
+							;;
+
+					esac
+
 					;;
 
 
-				true )
+				single-tests | peak-tests )
+				
+					## Create collected qtls.tsv
 
-					njobs=$(( njobs + 1 ))
-					echo "${cmd_make_in} && ${cmd_main}" >> "$jobs_file"
+					in_file="${in_dir}/qtls_all.tsv"
+					
+					# Clean old file
+					if [[ -f "$in_file" ]]; then
+					
+						rm "$in_file" 
+					
+					fi
+
+					tests_bed="${cell_type_path}/${MODE}/tests_snp_peak_pairs.bed"
+
+					cat "${in_dir}/tests/"* > "$in_file"
+
+					n_significant="$(cat "$in_file" | wc -l)"
+					n_tests="$(cat "$tests_bed" | wc -l)"
+					n_missing_tests=$((n_tests - n_significant))
+
+					# snp, gene, fdr_meqtl, pvalue, beta,
+					# snp_chr, snp_pos, snp_ref, snp_alt, peak_chr, peak_start, peak_end, peak_len
+					non_significant_placeholder=$'placeholder_snp\tplaceholder_peak\t1.0\t1.0\t0.0\t0\t0\tN\tN\t0\t0\t0\t501'
+
+
+					cmd_make_in="seq $n_missing_tests | xargs -I {} echo '$non_significant_placeholder' >> '$in_file'"
+
+					cmd_main="Rscript --verbose 'code/plot_qtl_results.R' \
+							'$in_file' \
+							'$out_dir' \
+							'$MODE' \
+							'$ALPHA'"
+
+
+					case "$USE_CLUSTER" in
+
+						false )
+
+							eval "$cmd_make_in"
+							eval "$cmd_main"
+							;;
+
+
+						true )
+
+							njobs=$(( njobs + 1 ))
+							echo "${cmd_make_in} && ${cmd_main}" >> "$jobs_file"
+							;;
+
+					esac
+
 					;;
 
 			esac
 
-			;;
+		done < <(find "${peak_set_path}/${CT_MAP_ID}" -mindepth 1 -maxdepth 1 -type d -print0)
 
-	esac
-
-done < <(find "${MATRIX_EQTL_OUTPUT_DIR}" -mindepth 1 -maxdepth 1 -type d -print0)
+	done < <(find "${algorithm_path}" -mindepth 1 -maxdepth 1 -type d -print0)
 
 
-## Job array
+	## Job array
 
-if [[ "$USE_CLUSTER" == "true" ]]; then
+	if [[ "$USE_CLUSTER" == "true" ]]; then
 
-	job_id="plot_fqtls_$(date -I)"
+		job_id="plot_fqtls_$(date -I)_${algorithm:0:4}"
 
-	bsub << EOF
+		bsub << EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=5G]"
-#BSUB -q short
+#BSUB -q long
 #BSUB -cwd ${PROJECT_DIR}
-#BSUB -J "${job_id}[1-${njobs}]"
+#BSUB -J "${job_id}"
 #BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.out
 #BSUB -e ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.err
 
@@ -236,7 +270,15 @@ load-r-440
 
 
 ## Run
-sed -n "\${LSB_JOBINDEX}p" ${jobs_file} | bash
+
+while IFS= read -r -d '' line; do
+
+	eval "\$line"
+	#sed -n "\${LSB_JOBINDEX}p" ${jobs_file} | bash
+
+done < <(printf '%s\\0' "\$(cat ${jobs_file})")
 EOF
 
-fi
+	fi
+
+done < <(find "${MATRIX_EQTL_OUTPUT_DIR}/footprints" -mindepth 1 -maxdepth 1 -type d -print0)

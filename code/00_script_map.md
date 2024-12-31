@@ -382,7 +382,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
 
 call_footprint-qtls_matrix-eqtl.bash
     - :: Call QTLs on the footprint data
-    - R: bsub(multiple=20000): 0.5M, 10000'
+    - R: bsub(multiple=20000): 0.5M, 170'
     - I:
         - MATRIX_EQTL_INPUT_DIR
     - O:
@@ -397,7 +397,7 @@ call_footprint-qtls_matrix-eqtl.bash
 
 plot_qtl_results_footprints.bash --> .R
     - :: Collect, FDR and plot results of QTL testing
-    - R: bsub: 0.5M, 6'
+    - R: bsub: 0.5M, 50'
     - I: MATRIX_EQTL_OUTPUT_DIR
     - O: MATRIX_EQTL_OUTPUT_DIR/
                                 qtls_all.tsv

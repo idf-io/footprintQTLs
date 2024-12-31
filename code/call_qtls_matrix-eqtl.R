@@ -123,14 +123,20 @@ tryCatch({
     
 
     ## Results
-	cat('results\n')
+	cat('Call QTLS:\n')
 
+	assert(file.exists(IN.DIR))
 	input.list <- input_loader(input.dir = IN.DIR, mode = MODE)
+	n_batches <- length(input.list)
 
 
 	cis.qtls.list <- list() # To populate
 
+	count <- RANGE.LOWER
+
 	for (input in input.list[RANGE.LOWER:RANGE.UPPER]) {
+
+		cat('Test batch:', count, '/', n_batches, '\n')
 
 		cis.qtls <- call_qtls_meqtl(gt.file = input$gt.file,
 									snp.loc.file = input$snp.loc.file,
@@ -144,7 +150,12 @@ tryCatch({
 
 		cis.qtls.list <- append(cis.qtls.list, list(cis.qtls))
 
+		warn(count <= RANGE.UPPER, paste0('Count = ', count, ' > RANGE.UPPER = ', RANGE.UPPER))
+		count <- count + 1
+
 	}
+
+	cat('Done.\n')
 
 	cis.qtls.all <- bind_rows(cis.qtls.list)
 

@@ -28,27 +28,27 @@ create_parent_dir <- function(file_path) {
 
 handle_error <- function(e, call.stack, quit = FALSE) {
 
-	error_log <- c(
+  error_log <- list(
+    "Error message" = conditionMessage(e),
+    "Condition call" = if (!is.null(conditionCall(e))) deparse(conditionCall(e)) else "No call available",
+    "Call stack" = lapply(call.stack, deparse)
+  )
+  
+  print(error_log)
+  
+  if (quit) {
 
-		'Error message:',
-		conditionMessage(e),
-		'Condition call:',
-		deparse(conditionCall(e)),
-		'Call stack',
-		call.stack
-	
-	)
+    quit(status = 1)
 
-	print(error_log)
-
-	if (quit == TRUE) {
-
-		quit(status = 1)
-
-	}
+  }
 
 }
 
+
 assert <- function(condition, message = "Assertion failed") {
-  if (!condition) stop(message)
+  if (!condition) stop(message, call. = FALSE)
+}
+
+warn <- function(condition, message = 'Warning!') {
+	if (!condition) warning(message, call. = FALSE)
 }

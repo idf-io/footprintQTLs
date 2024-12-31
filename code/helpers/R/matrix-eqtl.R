@@ -205,6 +205,12 @@ call_qtls_meqtl <- function(gt.file,
 
 		## Checks
 
+		warn(file.exists(gt.file), paste0('File <', gt.file, '> doesnt exist.'))
+		warn(file.exists(snp.loc.file), paste0('File <', snp.loc.file, '> doesnt exist.'))
+		warn(file.exists(phe.file), paste0('File <', phe.file, '> doesnt exist.'))
+		warn(file.exists(peak.loc.file), paste0('File <', peak.loc.file, '> doesnt exist.'))
+		warn(file.exists(cov.file), paste0('File <', cov.file, '> doesnt exist.'))
+
 		if (format.check == TRUE) {
 
 			input_format_check(gt.tsv = gt.file,
@@ -214,7 +220,6 @@ call_qtls_meqtl <- function(gt.file,
 							   cov.tsv = cov.file)
 
 		}
-		
 
 		##  User variables
 		
@@ -320,7 +325,7 @@ call_qtls_meqtl <- function(gt.file,
 	
 		return(list(me = me, cis.qtls = cis.qtls))
 
-	}, error = function(e) {handle_error(e, sys.calls(), quit=TRUE)})
+	}, error = function(e) {handle_error(e, sys.calls(), quit=FALSE)})
 
 }
 

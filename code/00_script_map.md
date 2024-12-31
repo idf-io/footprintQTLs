@@ -309,7 +309,7 @@ footprints_eda.bash
 footprints_eda_all-cts.bash
     - :: Exploratory data analysis on anndata of footprints (donors x peaks) across all cell-types.
     - R:
-        - bsub: 1G, 1'
+        - bsub: 1G, 5'
         - notebook: 1'
     - I:
         - FOOTPRINTS_DIR/ footprints_<CT>_processed.h5ad
@@ -382,7 +382,7 @@ make_matrix-eqtl_input_footprint-qtls.bash (-->ipynb)
 
 call_footprint-qtls_matrix-eqtl.bash
     - :: Call QTLs on the footprint data
-    - R: bsub(multiple=500): 0.5M, 25' bsub(multiple=5000): 0.5M, 10'
+    - R: bsub(multiple=20000): 0.5M, 10000'
     - I:
         - MATRIX_EQTL_INPUT_DIR
     - O:

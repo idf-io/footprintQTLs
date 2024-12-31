@@ -28,7 +28,7 @@ while getopts "m:c" opt; do
 
 		m ) MODE=$OPTARG ;;
 		c ) USE_CLUSTER=true ;;
-		? ) echo "Usage: $0 [-c] [-m mode {bulk-tests,single-tests}"; exit 1 ;;
+		? ) echo "Usage: $0 [-c] [-m mode {bulk-tests, pea-tests, single-tests}"; exit 1 ;;
 	
 	esac
 
@@ -43,13 +43,13 @@ case "$MODE" in
 
 	unset )
 
-		echo "Usage: $0 [-c] [-m mode {bulk-tests,single-tests}"
+		echo "Usage: $0 [-c] [-m mode {bulk-tests, peak-tests, single-tests}"
 		exit 1
 		;;
 
 	? )
 
-		echo "Usage: $0 [-c] [-m mode {bulk-tests,single-tests}"
+		echo "Usage: $0 [-c] [-m mode {bulk-tests, peak-tests, single-tests}"
 		exit 1
 		;;
 
@@ -77,7 +77,7 @@ fi
 
 ALPHA=0.01 # Aygun-2023 caQTLS: 0.05
 CIS_DIST=0 # Aygun-2023 caQTLS: within peak
-MULTIPLE=5000 # Nr of test-batches to perform for every job
+MULTIPLE=20000 # Nr of test-batches to perform for every job
 			 # For bulk-tests: All tests in 1 tests-batch
 			 # For single-tests: 1 test in 1 tests-batch
 			 # For peak-tests: ~2 tests in tests-batch
@@ -85,125 +85,101 @@ MULTIPLE=5000 # Nr of test-batches to perform for every job
 
 ### SCRIPT ###
 
+while IFS= read -r -d '' algorithm_path; do
 
-# Run function for all cell-types
+	algorithm="$(basename "$algorithm_path")"
 
-while IFS= read -r -d '' cell_type_dir; do
+	#if [[ "$algorithm" != "js_divergence" ]]; then
+		#continue
+	#fi
 
-	echo -e "\nProcessing file: ${cell_type_dir}"
-
-	echo -e "\t- Multiples: ${MULTIPLE}"
-
-	cell_type="$(basename "$cell_type_dir")"
-	in_dir="${cell_type_dir}/${MODE}"
-	out_dir="${MATRIX_EQTL_OUTPUT_DIR}/${cell_type}/${MODE}"
-	tests_bed="${MATRIX_EQTL_INPUT_DIR}/${cell_type}/${MODE}/tests_snp_peak_pairs.bed"
-	job_id="call_fqtls_$(date -I)_${cell_type}"
+	echo "$algorithm"
 
 
-	## Clean old run files and create dir
-	
-	if [[ -d "${out_dir}/tests" ]]; then
+	while IFS= read -r -d '' peak_set_path; do
 
-		rm -rf "${out_dir}/tests" 
+		peak_set="$(basename "$peak_set_path")"
 
-	fi
+		if [[ "$peak_set" == *old* ]]; then
 
-	if [[ -f "${out_dir}/qtl-testing_stats.tsv" ]]; then
-
-		rm "${out_dir}/qtl-testing_stats.tsv" 
-
-	fi
-
-	mkdir -p "$out_dir"
-
-
-	## Cluster relevant variables
-
-	if [[ "$USE_CLUSTER" == "true" ]]; then
-
-		njobs=0
-		jobs_file="code/bsub/logs/call_fqtls_$(date -I)_${cell_type}.commands"
-
-		if [[ -f "$jobs_file" ]]; then
-
-			rm "$jobs_file"
+			continue
 
 		fi
 
-	fi
+		#if [[ "$peak_set" != "ca-qtls_pm1k_variant-centred_15bp" ]]; then
+			#continue
+		#fi
+
+		echo -e "\t$peak_set"
 
 
-	## Iterate over cell-types
+		while IFS= read -r -d '' cell_type_path; do
 
-	case "$MODE" in
+			cell_type="$(basename "$cell_type_path")"
 
-		bulk-tests )
+			#if [[ "$cell_type" != "DL-EN" ]]; then
+				#continue
+			#fi
 
-			SLICE_SIZE=2000 # Default in matrix-eQTL
-			RANGE_LOWER=1 # Only 1 set of tests in bulk
-			RANGE_UPPER=1 # Only 1 set of tests in bulk
-			FORMAT_CHECK="TRUE"
-
-			cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
-					'$in_dir' \
-					'$out_dir' \
-					'qtls_all.tsv' \
-					'$MODE' \
-					'$ALPHA' \
-					'$CIS_DIST' \
-					'$SLICE_SIZE' \
-					'$RANGE_LOWER' \
-					'$RANGE_UPPER' \
-					'$FORMAT_CHECK'"
-
-			case "$USE_CLUSTER" in
-
-				false )
-
-					## Run
-					eval "$cmd_main"
-
-					;;
-
-				true )
-					njobs=$(( njobs + 1 ))
-					echo $cmd_main >> "$jobs_file"
-					;;
-
-			esac
-
-			;;
+			echo -e "\t\t$cell_type"
 
 
-		single-tests )
+			echo -e "\t\t\t- Multiples: ${MULTIPLE}"
 
-			SLICE_SIZE=1 # Only 1 test at a time
-			FORMAT_CHECK="FALSE"
-
-
-			## Check input format
-
-			format_check_meqtl_io \
-				"$in_dir/genotype_NA_source.tsv" \
-				"$in_dir/phenotype_source.tsv" \
-				"$in_dir/covariates_source.tsv"
+			in_dir="${cell_type_path}/${MODE}"
+			out_dir="${MATRIX_EQTL_OUTPUT_DIR}/footprints/${algorithm}/${peak_set}/${CT_MAP_ID}/${cell_type}/${MODE}"
+			tests_bed="${cell_type_path}/${MODE}/tests_snp_peak_pairs.bed"
+			job_id="call_fqtls_$(date -I)_${algorithm:0:4}_${peak_set}_${cell_type}"
 
 
-			## Iterate over user defined multiples of tests
+			## Clean old run files and create dir
 			
-			multiple=$MULTIPLE
-			n_tests=$(wc -l "$tests_bed")
-			
-			RANGE_LOWER=1
-			RANGE_UPPER=$multiple
+			if [[ -d "${out_dir}/tests" ]]; then
 
-			while true; do
+				rm -rf "${out_dir}/tests" 
 
-				cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
+			fi
+
+			if [[ -f "${out_dir}/qtl-testing_stats.tsv" ]]; then
+
+				rm "${out_dir}/qtl-testing_stats.tsv" 
+
+			fi
+
+			mkdir -p "$out_dir"
+
+
+			## Cluster relevant variables
+
+			if [[ "$USE_CLUSTER" == "true" ]]; then
+
+				njobs=0
+				jobs_file="code/bsub/logs/call_fqtls_$(date -I)_${algorithm}_${peak_set}_${cell_type}.commands"
+
+				if [[ -f "$jobs_file" ]]; then
+
+					rm "$jobs_file"
+
+				fi
+
+			fi
+
+
+			## Iterate over cell-types
+
+			case "$MODE" in
+
+				bulk-tests )
+
+					SLICE_SIZE=2000 # Default in matrix-eQTL
+					RANGE_LOWER=1 # Only 1 set of tests in bulk
+					RANGE_UPPER=1 # Only 1 set of tests in bulk
+					FORMAT_CHECK="TRUE"
+
+					cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
 							'$in_dir' \
 							'$out_dir' \
-							'snp-level_tests_${RANGE_LOWER}-${RANGE_UPPER}.tsv' \
+							'qtls_all.tsv' \
 							'$MODE' \
 							'$ALPHA' \
 							'$CIS_DIST' \
@@ -212,133 +188,208 @@ while IFS= read -r -d '' cell_type_dir; do
 							'$RANGE_UPPER' \
 							'$FORMAT_CHECK'"
 
+					case "$USE_CLUSTER" in
 
-				case "$USE_CLUSTER" in
+						false )
 
-					false )
+							## Run
+							eval "$cmd_main"
 
-						eval "$cmd_main"
-						;;
+							;;
 
+						true )
+							njobs=$(( njobs + 1 ))
+							echo $cmd_main >> "$jobs_file"
+							;;
 
-					true )
+					esac
 
-						njobs=$(( njobs + 1 ))
-						echo $cmd_main >> "$jobs_file"
-						;;
-
-				esac
-
-
-				RANGE_LOWER=$(( RANGE_LOWER + multiple ))
-				RANGE_UPPER=$(( RANGE_UPPER + multiple ))
-
-				if [[ "$RANGE_LOWER" -gt "$n_tests" ]]; then
-
-					break
-
-				fi
-
-				if [[ "$RANGE_UPPER" -gt "$n_tests" ]]; then
-
-					RANGE_UPPER=$n_tests
-
-				fi
+					;;
 
 
-			done
+				single-tests )
 
-			;;
-
-
-		peak-tests )
-
-			SLICE_SIZE=2 # ~2 snps per peak
-			FORMAT_CHECK="FALSE"
-
-			
-			## Check input format
-
-			format_check_meqtl_io \
-				"$in_dir/genotype_NA_source.tsv" \
-				"$in_dir/phenotype_source.tsv" \
-				"$in_dir/covariates_source.tsv"
+					SLICE_SIZE=1 # Only 1 test at a time
+					FORMAT_CHECK="FALSE"
 
 
-			## Iterate over user defined multiples of tests
-			
-			multiple=$MULTIPLE
-			n_tests=$(cut -f8 "$tests_bed" | sort | uniq | wc -l)
-			
-			RANGE_LOWER=1
-			RANGE_UPPER=$multiple
+					## Check input format
 
-			while true; do
-
-				cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
-						'$in_dir' \
-						'$out_dir' \
-						'tests_peak-level_${RANGE_LOWER}-${RANGE_UPPER}.tsv' \
-						'$MODE' \
-						'$ALPHA' \
-						'$CIS_DIST' \
-						'$SLICE_SIZE' \
-						'$RANGE_LOWER' \
-						'$RANGE_UPPER' \
-						'$FORMAT_CHECK'"
+					format_check_meqtl_io \
+						"$in_dir/genotype_NA_source.tsv" \
+						"$in_dir/phenotype_source.tsv" \
+						"$in_dir/covariates_source.tsv"
 
 
-				case "$USE_CLUSTER" in
+					## Iterate over user defined multiples of tests
+					
+					n_tests=$(wc -l "$tests_bed")
+					multiple="$MULTIPLE"
 
-					false )
+					RANGE_LOWER=1
 
-						eval "$cmd_main"
-						;;
+					if [[ "$n_tests" -ge "$MULTIPLE" ]]; then
 
+						RANGE_UPPER=$multiple
 
-					true )
+					else
 
-						njobs=$(( njobs + 1 ))
-						echo $cmd_main >> "$jobs_file"
-						;;
+						RANGE_UPPER="$n_batches"
 
-				esac
+					fi
+					
 
+					while true; do
 
-				RANGE_LOWER=$(( RANGE_LOWER + multiple ))
-				RANGE_UPPER=$(( RANGE_UPPER + multiple ))
-
-				if [[ "$RANGE_LOWER" -gt "$n_tests" ]]; then
-
-					break
-
-				fi
-
-				if [[ "$RANGE_UPPER" -gt "$n_tests" ]]; then
-
-					RANGE_UPPER=$n_tests
-
-				fi
-
-
-			done
-
-			;;
-
-	esac
+						cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
+									'$in_dir' \
+									'$out_dir' \
+									'tests_snp-level_${RANGE_LOWER}-${RANGE_UPPER}.tsv' \
+									'$MODE' \
+									'$ALPHA' \
+									'$CIS_DIST' \
+									'$SLICE_SIZE' \
+									'$RANGE_LOWER' \
+									'$RANGE_UPPER' \
+									'$FORMAT_CHECK'"
 
 
-	## Job array
+						case "$USE_CLUSTER" in
+
+							false )
+
+								eval "$cmd_main"
+								;;
 
 
-	if [[ "$USE_CLUSTER" == "true" ]]; then
+							true )
 
-			echo -e "\t- n_jobs = ${njobs}"
+								njobs=$(( njobs + 1 ))
+								echo $cmd_main >> "$jobs_file"
+								;;
 
-			bsub << EOF
+						esac
+
+
+						RANGE_LOWER=$(( RANGE_LOWER + multiple ))
+						RANGE_UPPER=$(( RANGE_UPPER + multiple ))
+
+						if [[ "$RANGE_LOWER" -gt "$n_tests" ]]; then
+
+							break
+
+						fi
+
+						if [[ "$RANGE_UPPER" -gt "$n_tests" ]]; then
+
+							RANGE_UPPER=$n_tests
+
+						fi
+
+
+					done
+
+					;;
+
+
+				peak-tests )
+
+					SLICE_SIZE=2 # ~2 snps per peak
+					FORMAT_CHECK="FALSE"
+
+					
+					## Check input format
+
+					format_check_meqtl_io \
+						"$in_dir/genotype_NA_source.tsv" \
+						"$in_dir/phenotype_source.tsv" \
+						"$in_dir/covariates_source.tsv"
+
+
+					## Iterate over user defined multiples of test batches
+					
+					n_batches=$(cut -f8 "$tests_bed" | sort | uniq | wc -l)
+					multiple="$MULTIPLE"
+
+					RANGE_LOWER=1
+
+					if [[ "$n_batches" -gt "$multiple" ]]; then
+
+						RANGE_UPPER=$multiple
+
+					else
+
+						RANGE_UPPER="$n_batches"
+
+					fi
+					
+
+					while true; do
+
+						cmd_main="Rscript --verbose 'code/call_qtls_matrix-eqtl.R' \
+								'$in_dir' \
+								'$out_dir' \
+								'tests_peak-level_${RANGE_LOWER}-${RANGE_UPPER}.tsv' \
+								'$MODE' \
+								'$ALPHA' \
+								'$CIS_DIST' \
+								'$SLICE_SIZE' \
+								'$RANGE_LOWER' \
+								'$RANGE_UPPER' \
+								'$FORMAT_CHECK'"
+
+
+						case "$USE_CLUSTER" in
+
+							false )
+
+								eval "$cmd_main"
+								;;
+
+
+							true )
+
+								njobs=$(( njobs + 1 ))
+								echo $cmd_main >> "$jobs_file"
+								;;
+
+						esac
+
+
+						RANGE_LOWER=$(( RANGE_LOWER + multiple ))
+						RANGE_UPPER=$(( RANGE_UPPER + multiple ))
+
+						if [[ "$RANGE_LOWER" -gt "$n_batches" ]]; then
+
+							break
+
+						fi
+
+						if [[ "$RANGE_UPPER" -gt "$n_batches" ]]; then
+
+							RANGE_UPPER=$n_batches
+
+						fi
+
+
+					done
+
+					;;
+
+			esac
+
+
+			## Job array
+
+
+			if [[ "$USE_CLUSTER" == "true" ]]; then
+
+					echo -e "\t\t\t- n_jobs = ${njobs}"
+
+					bsub << EOF
 #!/usr/bin/env bash
 #BSUB -R "rusage[mem=2G]"
-#BSUB -q medium
+#BSUB -q long
 #BSUB -cwd ${PROJECT_DIR}
 #BSUB -J "${job_id}[1-${njobs}]"
 #BSUB -o ${PROJECT_DIR}/code/bsub/logs/${job_id}.%I.out
@@ -356,6 +407,10 @@ load-r-440
 sed -n "\${LSB_JOBINDEX}p" ${jobs_file} | bash
 EOF
 
-	fi
-    
-done < <(find "${MATRIX_EQTL_INPUT_DIR}" -mindepth 1 -maxdepth 1 -type d -print0)
+			fi
+
+		done < <(find "${peak_set_path}/${CT_MAP_ID}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+	done < <(find "${algorithm_path}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+done < <(find "${MATRIX_EQTL_INPUT_DIR}/footprints" -mindepth 1 -maxdepth 1 -type d -print0)

@@ -410,6 +410,15 @@ plot_qtl_results_footprints.bash --> .R
     - Todos:
 
 
+gather-and-plot_qtl_metatable.ipynb:
+    - :: Gather and plot all QTL-calling metadata
+    - R: jhub: 5'
+    - I:
+        - MATRIX_EQTL_OUTPUT_DIR/footprints/<category>/qtls_all_fdr.tsv
+        - MATRIX_EQTL_INPUT_DIR/footprints/<category>/qtl_testing_metadata.tsv
+    - O:
+        - MATRIX_EQTL_OUTPUT_DIR/qtl_metatable_<today>.tsv
+
 
 
 

@@ -62,6 +62,9 @@ S1 & S2 --> F
 F --> G
 G --> H
 end
+
+Z[gather-and-plot_qtl_metatable.ipynb]
+H --> Z
 ```
 
 **Legend**

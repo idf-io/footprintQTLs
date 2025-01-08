@@ -58,6 +58,7 @@ process_gene-expression_adata.ipynb ? For uniformity, not made yet
 
 format_peaks_adata.ipynb
     - :: Formats the peaks anndata which will be used for the pipeline
+            - Corrects peak coordinate system
     - R:
         - bsub: 75G, 10'
     - I:
@@ -70,14 +71,15 @@ format_peaks_adata.ipynb
     - L: 
         - format_anndata.bash # BSUB launcher
         - process_peaks_adata.ipynb
-    - T: #format #ct-map #json
+    - T: #format #ct-map #json #coordinates
 
 
 process_peaks_adata.ipynb
     - :: Process the peaks anndata
-        - to create cell-type pseudo-bulked anndatas (remove 'Discard' cell-types)
+        - Correct cell_type naming
+        - Create anndatas subsets and pseudobulks (remove 'Discard' cell-types) for caQTL matrix eqtl input
     - R:
-        - bsub: 350G, 25'
+        - bsub: 120G, 50'
     - I:
         - ATAC_PEAKS_H5AD_NEW
         - GENOTYPES_TSV
@@ -117,7 +119,11 @@ format_fragment-files.bash
     - D:
     - V: Newest
 
-peak_selector.ipynb
+
+
+### caQTLs
+
+select_peaks_and_create_ca-qtl_adata.bash
     - :: Select peaks for downstream QTL analysis
     - R: jupyterhub02: 5'
     - I:
@@ -129,10 +135,7 @@ peak_selector.ipynb
     - T:
     - Todos:
 
-
-### caQTLs
-
-make_matrix-eqtl_input_footprint-qtls_bulk-tests.bash
+make_matrix-eqtl_input_chromatin-accessibility-qtls.bash --> .ipynb
     - :: Make phenotype, genotype, peak location, snp location and covariates(chromatin acc. PCs and genotype PCs) tsvs
     - R: ?
     - I: ?
@@ -142,9 +145,7 @@ make_matrix-eqtl_input_footprint-qtls_bulk-tests.bash
     - D: ?
     - N:
         - Already exported different subsets and pseudobulks in process_peaks_adata.bash
-        - Refactoring from "matrix-eQTL_input_refactored_annotation.ipynb"
     - T: ?
-    - Todos: ?
 
 call_ca-qtls_matrix-eqtl.R
 call_ca-qtls_matrix-eqtl.bash

@@ -7,8 +7,8 @@ subgraph Setup
 S1[format_genotype_data.bash]
 S2[make_extra_files_genotype.ipynb]
 S3[format_peaks_adata.ipynb]
-S4>process_peaks_adata.bash]
-S5[make_extra_files_peaks-accessibility.ipynb]
+S4[process_peaks_adata.bash]
+S3 --> S4
 S6[format_fragment-files.bash]
 end
 
@@ -22,22 +22,14 @@ X1 --> X2
 X2 --> X3
 end
 
-K>peak_selection.ipynb]
-L>make_matrix-eqtl_input_footprint-qtls.bash]
-L1[matrix-eQTL_input_refactored_annotation.ipynb]
-M{{make_extra_files_peaks-accessibility_cell-type-level.ipynb}}
+K1[select_peaks_and_create_ca-qtl_adata.bash]
+K2[make_matrix-eqtl_input_chromatin-accessibility-qtls.bash]
 
 subgraph caQTLs
-S2 & S3 & S4 -.-> K
-K & S3 -.-> L
-K & S3 -.-x L1
-L1 --o L
-L -.-> M
+S1 & S2 & S4 -.-> K1
+K1 --> K2
 end
 
-K --> B
-M --x B
-M --o K
 
 A[compute_atac-coverage_bw.bash]
 B[compute_footprints.bash]
@@ -49,6 +41,8 @@ D2[footprints_eda_all-cts.bash]
 F[make_matrix-eqtl_input_footprint-qtls.bash]
 G[call_footprint-qtls_matrix-eqtl.bash]
 H[plot_qtl_results_footprints.bash]
+
+K1 --> B
 
 subgraph fQTLs
 X3 --> A

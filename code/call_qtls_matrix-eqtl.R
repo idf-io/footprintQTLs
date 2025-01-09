@@ -171,12 +171,13 @@ tryCatch({
 
 		# Stats
 
-		stats <- c(me$cis$ntests, me$cis$neqtls, sum(cis.qtls$FDR < ALPHA))
+		#stats <- c(me$cis$ntests, me$cis$neqtls, sum(cis.qtls$FDR < ALPHA))
 
-		row.out.df <- as.data.frame(t(stats), stringsAsFactors = FALSE)
-		colnames(row.out.df) <- c('N_TESTS', 'N_QTLS_NOM', 'N_QTLS_FDR')
+		#row.out.df <- as.data.frame(t(stats), stringsAsFactors = FALSE)
+		#colnames(row.out.df) <- c('N_TESTS', 'N_QTLS_NOM', 'N_QTLS_FDR')
 
-		write.table(row.out.df, file = STATS.FILE, sep = "\t", row.names = FALSE, quote = FALSE)
+		#write.table(row.out.df, file = STATS.FILE, sep = "\t", row.names = FALSE, quote = FALSE)
+		#write(my_variable, file = "output.txt")
 	
 
 	} else {

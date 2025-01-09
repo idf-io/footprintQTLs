@@ -322,6 +322,15 @@ call_qtls_meqtl <- function(gt.file,
 			colnames(cis.qtls) <- names(out.cols)
 
 		}
+
+
+		if (format.check == TRUE) {
+
+			write(me$cis$ntests, file = file.path(dirname(gt.file), "n_tests.txt"))
+
+		}
+
+		##  User variables
 	
 		return(list(me = me, cis.qtls = cis.qtls))
 

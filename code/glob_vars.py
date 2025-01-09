@@ -24,6 +24,7 @@ ATAC_PEAKS_H5AD_NEW = f'data/datasets/{DATASET}/atac-seq/chromatin_accessibility
 ATAC_PEAKS_PROCESSED_H5AD = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/adata/peak_matrix.h5ad'
 ATAC_CHROM_ACCESS_METADATA_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/metadata'
 SELECT_PEAKS_TSV_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/metadata/select_peaks/{CT_MAP_ID}'
+SELECT_TEST_REGIONS_DIR = f'data/intermediate-data/datasets/{DATASET}/atac-seq/chromatin-accessibility/metadata/select_test-regions/{CT_MAP_ID}'
 CA_QTLS_MEQTL_INPUT_DIR = f'data/intermediate-data/datasets/{DATASET}/matrix-eqtl/chromatin-accessibility/{CT_MAP_ID}'
 
 RNA_H5AD_OLD = '/omics/groups/OE0540/internal/projects/HCA_organoid_2/cemm_sabrina-20Jul2022/outputs_allsamples/sabrina_allsamples_rna_final_after_atac.h5ad' # Only python

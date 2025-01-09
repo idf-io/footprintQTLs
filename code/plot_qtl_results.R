@@ -98,54 +98,98 @@ tryCatch({
     }
 
 
-	## Load qtls tsv
+	if (MODE == 'bulk-tests') {
 
-	out.cols <- c(snp = 'character',
-				  gene = 'character',
-				  fdr_meqtl = 'numeric',
-				  pvalue = 'numeric',
-				  beta = 'numeric',
-				  snp_chr = 'numeric',
-				  snp_pos = 'numeric',
-				  snp_ref = 'character',
-				  snp_alt = 'character',
-				  peak_chr = 'numeric',
-				  peak_start = 'numeric',
-				  peak_end = 'numeric',
-				  peak_len = 'numeric')
+		## Load qtls tsv
 
-	qtls.df <- fread(IN.FILE, sep='\t', header = FALSE, col.names = names(out.cols))
+		out.cols <- c(snp = 'character',
+					  gene = 'character',
+					  fdr = 'numeric',
+					  pvalue = 'numeric',
+					  beta = 'numeric',
+					  snp_chr = 'numeric',
+					  snp_pos = 'numeric',
+					  snp_ref = 'character',
+					  snp_alt = 'character',
+					  peak_chr = 'numeric',
+					  peak_start = 'numeric',
+					  peak_end = 'numeric',
+					  peak_len = 'numeric')
 
-
-	## FDR
-
-	qtls.df$fdr <- p.adjust(qtls.df[['pvalue']], 'BH')
-	qtls.df <- qtls.df %>% filter(snp != 'placeholder_snp') # remove placeholder loci
-
-	new.df.file <- file.path(dirname(IN.FILE), 'qtls_all_fdr.tsv')
-	write.table(qtls.df, file = new.df.file, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
-	
-
-	## Metadata
-
-	n.qtls.nom <- qtls.df %>% filter(pvalue < ALPHA) %>% nrow
-	n.qtls.fdr <- qtls.df %>% filter(fdr < ALPHA) %>% nrow
-
-	stats.file <- file.path(dirname(IN.FILE), 'qtls_stats.tsv')
-	lines <- c('\t\tn_qtls',
-				paste0('nominal_pval\t', n.qtls.nom),
-				paste0('fdr_pval\t', n.qtls.fdr))
-
-	print(lines)
-	writeLines(lines, stats.file)
+		qtls.df <- fread(IN.FILE, sep='\t', header = FALSE, col.names = names(out.cols))
 
 
-	## Plot
+		## Metadata
 
-	plot_results(qtls.df = qtls.df,
-				 out.dir = OUT.DIR,
-				 alpha = ALPHA)
+		n.qtls.nom <- qtls.df %>% filter(pvalue < ALPHA) %>% nrow
+		n.qtls.fdr <- qtls.df %>% filter(fdr < ALPHA) %>% nrow
+
+		stats.file <- file.path(dirname(IN.FILE), 'qtls_stats.tsv')
+		lines <- c('\t\tn_qtls',
+					paste0('nominal_pval\t', n.qtls.nom),
+					paste0('fdr_pval\t', n.qtls.fdr))
+
+		print(lines)
+		writeLines(lines, stats.file)
+
+
+		## Plot
+
+		plot_results(qtls.df = qtls.df,
+					 out.dir = OUT.DIR,
+					 alpha = ALPHA)
+
+	} else if (MODE %in% c('single-tests', 'peak-tests')) {
+
+		## Load qtls tsv
+
+		out.cols <- c(snp = 'character',
+					  gene = 'character',
+					  fdr_meqtl = 'numeric',
+					  pvalue = 'numeric',
+					  beta = 'numeric',
+					  snp_chr = 'numeric',
+					  snp_pos = 'numeric',
+					  snp_ref = 'character',
+					  snp_alt = 'character',
+					  peak_chr = 'numeric',
+					  peak_start = 'numeric',
+					  peak_end = 'numeric',
+					  peak_len = 'numeric')
+
+		qtls.df <- fread(IN.FILE, sep='\t', header = FALSE, col.names = names(out.cols))
+
+
+		## FDR
+
+		qtls.df$fdr <- p.adjust(qtls.df[['pvalue']], 'BH')
+		qtls.df <- qtls.df %>% filter(snp != 'placeholder_snp') # remove placeholder loci
+
+		new.df.file <- file.path(dirname(IN.FILE), 'qtls_all_fdr.tsv')
+		write.table(qtls.df, file = new.df.file, sep = '\t', row.names = FALSE, col.names = TRUE, quote = FALSE)
+		
+
+		## Metadata
+
+		n.qtls.nom <- qtls.df %>% filter(pvalue < ALPHA) %>% nrow
+		n.qtls.fdr <- qtls.df %>% filter(fdr < ALPHA) %>% nrow
+
+		stats.file <- file.path(dirname(IN.FILE), 'qtls_stats.tsv')
+		lines <- c('\t\tn_qtls',
+					paste0('nominal_pval\t', n.qtls.nom),
+					paste0('fdr_pval\t', n.qtls.fdr))
+
+		print(lines)
+		writeLines(lines, stats.file)
+
+
+		## Plot
+
+		plot_results(qtls.df = qtls.df,
+					 out.dir = OUT.DIR,
+					 alpha = ALPHA)
+
+	}
     
-
 }, error = function(e) {handle_error(e, sys.calls(), quit=TRUE)}
 )

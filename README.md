@@ -24,10 +24,14 @@ end
 
 K1[select_peaks_and_create_ca-qtl_adata.bash]
 K2[make_matrix-eqtl_input_chromatin-accessibility-qtls.bash]
+K3[call_chromatin-accessibility-qtls_matrix-eqtl.bash]
+K4[plot_qtl_results_chromatin-accessibility.bash]
 
 subgraph caQTLs
-S1 & S2 & S4 -.-> K1
+S1 & S2 & S4 --> K1
 K1 --> K2
+K2 --> K3
+K3 --> K4
 end
 
 
@@ -42,7 +46,8 @@ F[make_matrix-eqtl_input_footprint-qtls.bash]
 G[call_footprint-qtls_matrix-eqtl.bash]
 H[plot_qtl_results_footprints.bash]
 
-K1 --> B
+K2 --> A2[generate_phenotype-modality_and_define-tests.ipynb]
+A2 --> B & F
 
 subgraph fQTLs
 X3 --> A
@@ -58,7 +63,7 @@ G --> H
 end
 
 Z[gather-and-plot_qtl_metatable.ipynb]
-H --> Z
+H & K4 --> Z
 ```
 
 **Legend**
